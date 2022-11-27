@@ -10,11 +10,9 @@ import (
 type Game struct {
 	lastUpdateCalled time.Time
 	player           *Player
-	timer            float64
-	state            string
 	images           map[string]*ebiten.Image
-	level            int
-	score            int
+	camera           *Camera
+	level            *Level
 }
 
 func NewGame() *Game {
@@ -24,7 +22,7 @@ func NewGame() *Game {
 		},
 		lastUpdateCalled: time.Now(),
 	}
-	r.StartNewGame()
+	r.LoadLevel("test-level")
 	return r
 }
 
@@ -33,6 +31,8 @@ func (r *Game) Update() error {
 	r.lastUpdateCalled = time.Now()
 
 	r.player.Update(delta, r)
+	r.camera.Update(delta)
+	r.level.Update(delta, r)
 
 	if inpututil.IsKeyJustPressed(ebiten.KeyF) {
 		ebiten.SetFullscreen(!ebiten.IsFullscreen())
@@ -45,7 +45,9 @@ func (r *Game) Update() error {
 }
 
 func (r *Game) Draw(screen *ebiten.Image) {
-	r.player.Draw(screen)
+	r.level.Draw(r.camera)
+	r.player.Draw(r.camera)
+	r.camera.DrawBuffer(screen)
 }
 
 func (r *Game) Layout(outsideWidth, outsideHeight int) (int, int) {

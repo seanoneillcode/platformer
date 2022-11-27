@@ -15,6 +15,7 @@ const (
 	ScreenWidth  = 240
 	ScreenHeight = 180
 	Scale        = 4
+	TileSize     = 16
 )
 
 var NormalEscapeError = errors.New("normal escape termination")

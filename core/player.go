@@ -65,14 +65,14 @@ func (r *Player) Update(delta float64, game *Game) {
 	}
 }
 
-func (r *Player) Draw(screen *ebiten.Image) {
+func (r *Player) Draw(camera common.Camera) {
 	if r.state == dyingState {
 		return
 	}
 	op := &ebiten.DrawImageOptions{}
 	op.GeoM.Translate(r.x, r.y)
 	op.GeoM.Scale(common.Scale, common.Scale)
-	screen.DrawImage(r.image.SubImage(image.Rect(r.frame*r.drawSizex, 0, (r.frame+1)*r.drawSizex, r.drawSizey)).(*ebiten.Image), op)
+	camera.DrawImage(r.image.SubImage(image.Rect(r.frame*r.drawSizex, 0, (r.frame+1)*r.drawSizex, r.drawSizey)).(*ebiten.Image), op)
 }
 
 func (r *Player) GetHit(game *Game) {
@@ -80,4 +80,8 @@ func (r *Player) GetHit(game *Game) {
 	if r.lives < 0 {
 		r.state = dyingState
 	}
+}
+
+func (r *Player) GetPos() (float64, float64) {
+	return r.x, r.y
 }
