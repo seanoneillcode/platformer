@@ -44,3 +44,7 @@ func (c *Camera) DrawImage(img *ebiten.Image, options *ebiten.DrawImageOptions) 
 func (c *Camera) Target(target CameraTarget) {
 	c.target = target
 }
+
+func (c *Camera) GetPos() (float64, float64) {
+	return c.x, c.y
+}

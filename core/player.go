@@ -55,6 +55,7 @@ func (r *Player) Update(delta float64, game *Game) {
 	switch r.state {
 	case playingState:
 		inputX := 0.0
+		inputY := 0.0
 		if ebiten.IsKeyPressed(ebiten.KeyArrowLeft) || ebiten.IsKeyPressed(ebiten.KeyA) {
 			inputX = -1
 		}
@@ -62,6 +63,14 @@ func (r *Player) Update(delta float64, game *Game) {
 			inputX = 1
 		}
 		r.x = r.x + (inputX * delta * r.speed)
+
+		if ebiten.IsKeyPressed(ebiten.KeyArrowDown) || ebiten.IsKeyPressed(ebiten.KeyS) {
+			inputY = 1
+		}
+		if ebiten.IsKeyPressed(ebiten.KeyArrowUp) || ebiten.IsKeyPressed(ebiten.KeyW) {
+			inputY = -1
+		}
+		r.y = r.y + (inputY * delta * r.speed)
 	}
 }
 
