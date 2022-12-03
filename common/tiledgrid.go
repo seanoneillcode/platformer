@@ -199,19 +199,19 @@ func (tg *TiledGrid) GetTileData(x int, y int) *TileData {
 
 	if index < 0 || index >= len(tg.Layers[0].Data) {
 		// no tile here
-		td.Block = true
+		td.Block = false
 		return &td
 	}
 
 	if x < 0 || y < 0 {
 		// no tile here
-		td.Block = true
+		td.Block = false
 		return &td
 	}
 
 	tileSetIndex := tg.Layers[0].Data[index]
 	if tileSetIndex == 0 {
-		td.Block = true
+		td.Block = false
 		return &td
 	}
 

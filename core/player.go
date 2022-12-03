@@ -9,30 +9,38 @@ import (
 const playingState = "playing"
 const dyingState = "dying"
 
-const dyingTimeAmount = 0.8
-const shootTimerAmount = 0.5
-const moveFrameAmount = 0.04
-const playerYNormal = 200.0
+const standardJumpHeight = 16 * 3
+const standardJumpTime = 0.5
+const standardFallTime = 0.4
+const minimumJumpHeight = 8
+const coyoteTimeAmount = 0.16
+const fudge = 0.01
 
 type Player struct {
-	x           float64
-	y           float64
-	targetY     float64
-	frame       int
-	frames      int
-	sizex       int
-	sizey       int
-	drawSizex   int
-	drawSizey   int
-	state       string
-	speed       float64
-	timer       float64
-	shootTimer  float64
-	image       *ebiten.Image
-	lives       int
-	animTimer   float64
-	targetFrame int
-	moveYSpeed  float64
+	x                  float64
+	y                  float64
+	targetY            float64
+	frame              int
+	frames             int
+	sizex              float64
+	sizey              float64
+	drawSizex          int
+	drawSizey          int
+	state              string
+	speed              float64
+	timer              float64
+	shootTimer         float64
+	image              *ebiten.Image
+	lives              int
+	animTimer          float64
+	targetFrame        int
+	moveYSpeed         float64
+	jumpAcc            float64
+	velocityY          float64
+	coyoteTimer        float64
+	jumpTimer          float64
+	wasPressingJump    bool
+	alreadyAbortedJump bool
 }
 
 func NewPlayer(game *Game) *Player {
@@ -41,12 +49,13 @@ func NewPlayer(game *Game) *Player {
 		y:         common.ScreenHeight / 2,
 		x:         common.ScreenWidth / 2,
 		speed:     80,
-		sizex:     16, // physical size
-		sizey:     24, // physical size
-		drawSizex: 32, // just for drawing
-		drawSizey: 32, // just for drawing
+		sizex:     14, // physical size
+		sizey:     16, // physical size
+		drawSizex: 16, // just for drawing
+		drawSizey: 16, // just for drawing
 		lives:     2,
 		image:     game.images["player"],
+		velocityY: 0,
 	}
 	return p
 }
@@ -55,22 +64,115 @@ func (r *Player) Update(delta float64, game *Game) {
 	switch r.state {
 	case playingState:
 		inputX := 0.0
-		inputY := 0.0
+		var tryJump bool
 		if ebiten.IsKeyPressed(ebiten.KeyArrowLeft) || ebiten.IsKeyPressed(ebiten.KeyA) {
 			inputX = -1
 		}
 		if ebiten.IsKeyPressed(ebiten.KeyArrowRight) || ebiten.IsKeyPressed(ebiten.KeyD) {
 			inputX = 1
 		}
-		r.x = r.x + (inputX * delta * r.speed)
-
 		if ebiten.IsKeyPressed(ebiten.KeyArrowDown) || ebiten.IsKeyPressed(ebiten.KeyS) {
-			inputY = 1
+
 		}
 		if ebiten.IsKeyPressed(ebiten.KeyArrowUp) || ebiten.IsKeyPressed(ebiten.KeyW) {
-			inputY = -1
+
 		}
-		r.y = r.y + (inputY * delta * r.speed)
+		if ebiten.IsKeyPressed(ebiten.KeySpace) {
+			tryJump = true
+		}
+
+		time := standardJumpTime
+		if r.jumpTimer > (standardJumpTime) {
+			time = standardFallTime
+		}
+		gravity := (standardJumpHeight * -2) / (time * time)
+
+		oldx := r.x
+		oldy := r.y
+		newx := r.x + (inputX * delta * r.speed)
+		newy := r.y - (r.velocityY * delta) + (0.5 * gravity * delta * delta)
+		r.velocityY = r.velocityY + (gravity * delta)
+
+		var hitCeiling = false
+		var hitFloor = false
+		td := game.level.tiledGrid.GetTileData(int(newx/common.TileSize), int(oldy/common.TileSize))
+		if td.Block {
+			newx = float64(td.X*common.TileSize) + common.TileSize + fudge
+		}
+		td = game.level.tiledGrid.GetTileData(int((newx+r.sizex)/common.TileSize), int(oldy/common.TileSize))
+		if td.Block {
+			newx = float64(td.X*common.TileSize) - r.sizex - fudge
+		}
+		td = game.level.tiledGrid.GetTileData(int(newx/common.TileSize), int((oldy+r.sizey)/common.TileSize))
+		if td.Block {
+			newx = float64(td.X*common.TileSize) + common.TileSize + fudge
+		}
+		td = game.level.tiledGrid.GetTileData(int((newx+r.sizex)/common.TileSize), int((oldy+r.sizey)/common.TileSize))
+		if td.Block {
+			newx = float64(td.X*common.TileSize) - r.sizex - fudge
+		}
+
+		td = game.level.tiledGrid.GetTileData(int(oldx/common.TileSize), int(newy/common.TileSize))
+		if td.Block {
+			newy = float64(td.Y*common.TileSize) + common.TileSize + fudge
+			if newy > 0 {
+				hitCeiling = true
+			}
+		}
+		td = game.level.tiledGrid.GetTileData(int(oldx/common.TileSize), int((newy+r.sizey)/common.TileSize))
+		if td.Block {
+			newy = float64(td.Y*common.TileSize) - common.TileSize - fudge
+			if newy > 0 {
+				hitFloor = true
+				r.velocityY = 0
+				r.coyoteTimer = coyoteTimeAmount
+			}
+		}
+		td = game.level.tiledGrid.GetTileData(int((oldx+r.sizex)/common.TileSize), int(newy/common.TileSize))
+		if td.Block {
+			newy = float64(td.Y*common.TileSize) + common.TileSize + fudge
+			if newy > 0 {
+				hitCeiling = true
+			}
+		}
+		td = game.level.tiledGrid.GetTileData(int((oldx+r.sizex)/common.TileSize), int((newy+r.sizey)/common.TileSize))
+		if td.Block {
+			newy = float64(td.Y*common.TileSize) - common.TileSize - fudge
+			if newy > 0 {
+				hitFloor = true
+				r.velocityY = 0
+				r.coyoteTimer = coyoteTimeAmount
+			}
+		}
+
+		r.x = newx
+		r.y = newy
+
+		if tryJump {
+			if hitFloor || r.coyoteTimer > 0 {
+				r.coyoteTimer = 0
+				r.velocityY = (2 * standardJumpHeight) / standardJumpTime
+				r.jumpTimer = 0
+			}
+		} else {
+			// if player is currently jumping in the first half phase of jumping
+			if r.jumpTimer < standardJumpTime && r.wasPressingJump && !r.alreadyAbortedJump {
+				r.alreadyAbortedJump = true
+				r.velocityY = (2 * minimumJumpHeight) / (standardJumpTime)
+			}
+		}
+		r.jumpTimer = r.jumpTimer + delta
+		if r.coyoteTimer > 0 {
+			r.coyoteTimer = r.coyoteTimer - delta
+		}
+		if hitFloor {
+			r.alreadyAbortedJump = false
+		}
+		if hitCeiling {
+			r.alreadyAbortedJump = true
+			r.velocityY = -r.velocityY
+		}
+		r.wasPressingJump = tryJump
 	}
 }
 
@@ -79,7 +181,7 @@ func (r *Player) Draw(camera common.Camera) {
 		return
 	}
 	op := &ebiten.DrawImageOptions{}
-	op.GeoM.Translate(r.x, r.y)
+	op.GeoM.Translate(r.x-1, r.y)
 	op.GeoM.Scale(common.Scale, common.Scale)
 	camera.DrawImage(r.image.SubImage(image.Rect(r.frame*r.drawSizex, 0, (r.frame+1)*r.drawSizex, r.drawSizey)).(*ebiten.Image), op)
 }
