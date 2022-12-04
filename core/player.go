@@ -18,6 +18,8 @@ const fudge = 0.15
 const runAcc = 20.0
 const maxRunVelocity = 120
 
+const hangEnabled = false
+
 type Player struct {
 	x                  float64
 	y                  float64
@@ -26,6 +28,8 @@ type Player struct {
 	frames             int
 	sizex              float64
 	sizey              float64
+	drawOffsetX        float64
+	drawOffsetY        float64
 	drawSizex          int
 	drawSizey          int
 	state              string
@@ -52,10 +56,12 @@ func NewPlayer(game *Game) *Player {
 		state:           playingState,
 		y:               common.ScreenHeight / 2,
 		x:               common.ScreenWidth / 2,
-		sizex:           12, // physical size
+		sizex:           16, // physical size
 		sizey:           16, // physical size
-		drawSizex:       16, // just for drawing
-		drawSizey:       16, // just for drawing
+		drawOffsetX:     8,  // just for drawing
+		drawOffsetY:     16, // just for drawing
+		drawSizex:       32, // just for drawing
+		drawSizey:       32,
 		lives:           2,
 		image:           game.images["player"],
 		velocityY:       0,
@@ -70,6 +76,7 @@ func (r *Player) Update(delta float64, game *Game) {
 	switch r.state {
 	case playingState:
 		var tryJump bool
+		var tryDown bool
 		r.targetVelocityX = 0
 		if ebiten.IsKeyPressed(ebiten.KeyArrowLeft) || ebiten.IsKeyPressed(ebiten.KeyA) {
 			r.direction = -1
@@ -80,7 +87,7 @@ func (r *Player) Update(delta float64, game *Game) {
 			r.targetVelocityX = maxRunVelocity
 		}
 		if ebiten.IsKeyPressed(ebiten.KeyArrowDown) || ebiten.IsKeyPressed(ebiten.KeyS) {
-
+			tryDown = true
 		}
 		if ebiten.IsKeyPressed(ebiten.KeyArrowUp) || ebiten.IsKeyPressed(ebiten.KeyW) {
 
@@ -190,7 +197,25 @@ func (r *Player) Update(delta float64, game *Game) {
 		if hitWall {
 			r.targetVelocityX = 0
 			r.velocityX = 0
+
 		}
+
+		if hangEnabled && !tryDown {
+			hangX := -2.0
+			if r.direction > 0 {
+				hangX = r.sizex + 2
+			}
+			tdOne := game.level.tiledGrid.GetTileData(int((r.x+hangX)/common.TileSize), int((r.y)/common.TileSize))
+			if tdOne.Block {
+				tdTwo := game.level.tiledGrid.GetTileData(int((r.x+hangX)/common.TileSize), int((r.y-4)/common.TileSize))
+				if !tdTwo.Block {
+					hitFloor = true
+					r.velocityY = 0
+					r.coyoteTimer = coyoteTimeAmount
+				}
+			}
+		}
+
 		if r.velocityX < r.targetVelocityX {
 			r.velocityX = r.velocityX + runAcc
 			if r.velocityX > r.targetVelocityX {
@@ -211,7 +236,7 @@ func (r *Player) Draw(camera common.Camera) {
 		return
 	}
 	op := &ebiten.DrawImageOptions{}
-	op.GeoM.Translate(r.x-2, r.y)
+	op.GeoM.Translate(r.x-r.drawOffsetX, r.y-r.drawOffsetY)
 	op.GeoM.Scale(common.Scale, common.Scale)
 	camera.DrawImage(r.image.SubImage(image.Rect(r.frame*r.drawSizex, 0, (r.frame+1)*r.drawSizex, r.drawSizey)).(*ebiten.Image), op)
 }
