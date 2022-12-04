@@ -10,11 +10,11 @@ const playingState = "playing"
 const dyingState = "dying"
 
 const standardJumpHeight = 16 * 3
-const standardJumpTime = 0.5
-const standardFallTime = 0.4
-const minimumJumpHeight = 8
+const standardJumpTime = 0.4
+const standardFallTime = 0.34
+const minimumJumpHeight = 16
 const coyoteTimeAmount = 0.16
-const fudge = 0.01
+const fudge = 0.15
 const runAcc = 20.0
 const maxRunVelocity = 120
 
@@ -52,7 +52,7 @@ func NewPlayer(game *Game) *Player {
 		state:           playingState,
 		y:               common.ScreenHeight / 2,
 		x:               common.ScreenWidth / 2,
-		sizex:           14, // physical size
+		sizex:           12, // physical size
 		sizey:           16, // physical size
 		drawSizex:       16, // just for drawing
 		drawSizey:       16, // just for drawing
@@ -211,7 +211,7 @@ func (r *Player) Draw(camera common.Camera) {
 		return
 	}
 	op := &ebiten.DrawImageOptions{}
-	op.GeoM.Translate(r.x-1, r.y)
+	op.GeoM.Translate(r.x-2, r.y)
 	op.GeoM.Scale(common.Scale, common.Scale)
 	camera.DrawImage(r.image.SubImage(image.Rect(r.frame*r.drawSizex, 0, (r.frame+1)*r.drawSizex, r.drawSizey)).(*ebiten.Image), op)
 }
