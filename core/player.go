@@ -15,6 +15,8 @@ const standardFallTime = 0.4
 const minimumJumpHeight = 8
 const coyoteTimeAmount = 0.16
 const fudge = 0.01
+const runAcc = 20.0
+const maxRunVelocity = 120
 
 type Player struct {
 	x                  float64
@@ -27,7 +29,6 @@ type Player struct {
 	drawSizex          int
 	drawSizey          int
 	state              string
-	speed              float64
 	timer              float64
 	shootTimer         float64
 	image              *ebiten.Image
@@ -37,25 +38,30 @@ type Player struct {
 	moveYSpeed         float64
 	jumpAcc            float64
 	velocityY          float64
+	velocityX          float64
 	coyoteTimer        float64
 	jumpTimer          float64
 	wasPressingJump    bool
 	alreadyAbortedJump bool
+	direction          int
+	targetVelocityX    float64
 }
 
 func NewPlayer(game *Game) *Player {
 	p := &Player{
-		state:     playingState,
-		y:         common.ScreenHeight / 2,
-		x:         common.ScreenWidth / 2,
-		speed:     80,
-		sizex:     14, // physical size
-		sizey:     16, // physical size
-		drawSizex: 16, // just for drawing
-		drawSizey: 16, // just for drawing
-		lives:     2,
-		image:     game.images["player"],
-		velocityY: 0,
+		state:           playingState,
+		y:               common.ScreenHeight / 2,
+		x:               common.ScreenWidth / 2,
+		sizex:           14, // physical size
+		sizey:           16, // physical size
+		drawSizex:       16, // just for drawing
+		drawSizey:       16, // just for drawing
+		lives:           2,
+		image:           game.images["player"],
+		velocityY:       0,
+		velocityX:       0,
+		direction:       1,
+		targetVelocityX: 0,
 	}
 	return p
 }
@@ -63,13 +69,15 @@ func NewPlayer(game *Game) *Player {
 func (r *Player) Update(delta float64, game *Game) {
 	switch r.state {
 	case playingState:
-		inputX := 0.0
 		var tryJump bool
+		r.targetVelocityX = 0
 		if ebiten.IsKeyPressed(ebiten.KeyArrowLeft) || ebiten.IsKeyPressed(ebiten.KeyA) {
-			inputX = -1
+			r.direction = -1
+			r.targetVelocityX = -maxRunVelocity
 		}
 		if ebiten.IsKeyPressed(ebiten.KeyArrowRight) || ebiten.IsKeyPressed(ebiten.KeyD) {
-			inputX = 1
+			r.direction = 1
+			r.targetVelocityX = maxRunVelocity
 		}
 		if ebiten.IsKeyPressed(ebiten.KeyArrowDown) || ebiten.IsKeyPressed(ebiten.KeyS) {
 
@@ -89,27 +97,33 @@ func (r *Player) Update(delta float64, game *Game) {
 
 		oldx := r.x
 		oldy := r.y
-		newx := r.x + (inputX * delta * r.speed)
+
+		newx := r.x + (delta * r.velocityX)
 		newy := r.y - (r.velocityY * delta) + (0.5 * gravity * delta * delta)
 		r.velocityY = r.velocityY + (gravity * delta)
 
 		var hitCeiling = false
 		var hitFloor = false
+		var hitWall = false
 		td := game.level.tiledGrid.GetTileData(int(newx/common.TileSize), int(oldy/common.TileSize))
 		if td.Block {
 			newx = float64(td.X*common.TileSize) + common.TileSize + fudge
+			hitWall = true
 		}
 		td = game.level.tiledGrid.GetTileData(int((newx+r.sizex)/common.TileSize), int(oldy/common.TileSize))
 		if td.Block {
 			newx = float64(td.X*common.TileSize) - r.sizex - fudge
+			hitWall = true
 		}
 		td = game.level.tiledGrid.GetTileData(int(newx/common.TileSize), int((oldy+r.sizey)/common.TileSize))
 		if td.Block {
 			newx = float64(td.X*common.TileSize) + common.TileSize + fudge
+			hitWall = true
 		}
 		td = game.level.tiledGrid.GetTileData(int((newx+r.sizex)/common.TileSize), int((oldy+r.sizey)/common.TileSize))
 		if td.Block {
 			newx = float64(td.X*common.TileSize) - r.sizex - fudge
+			hitWall = true
 		}
 
 		td = game.level.tiledGrid.GetTileData(int(oldx/common.TileSize), int(newy/common.TileSize))
@@ -170,9 +184,25 @@ func (r *Player) Update(delta float64, game *Game) {
 		}
 		if hitCeiling {
 			r.alreadyAbortedJump = true
-			r.velocityY = -r.velocityY
+			r.velocityY = -20
 		}
 		r.wasPressingJump = tryJump
+		if hitWall {
+			r.targetVelocityX = 0
+			r.velocityX = 0
+		}
+		if r.velocityX < r.targetVelocityX {
+			r.velocityX = r.velocityX + runAcc
+			if r.velocityX > r.targetVelocityX {
+				r.velocityX = r.targetVelocityX
+			}
+		}
+		if r.velocityX > r.targetVelocityX {
+			r.velocityX = r.velocityX - runAcc
+			if r.velocityX < r.targetVelocityX {
+				r.velocityX = r.targetVelocityX
+			}
+		}
 	}
 }
 
