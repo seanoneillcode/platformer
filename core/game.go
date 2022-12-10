@@ -18,12 +18,14 @@ type Game struct {
 func NewGame() *Game {
 	r := &Game{
 		images: map[string]*ebiten.Image{
-			"player": common.LoadImage("player.png"),
-			//"player":      common.LoadImage("test-player.png"),
+			"player-run":  common.LoadImage("player-run.png"),
+			"player-idle": common.LoadImage("player-idle.png"),
+			"player-jump": common.LoadImage("player-jump.png"),
+			"player-fall": common.LoadImage("player-fall.png"),
 		},
 		lastUpdateCalled: time.Now(),
 	}
-	r.LoadLevel("test-level")
+	r.LoadLevel("run-level")
 	return r
 }
 

@@ -2,30 +2,25 @@ package core
 
 import (
 	"github.com/hajimehoshi/ebiten/v2"
-	"image"
 	"platformer/common"
 )
 
 const playingState = "playing"
 const dyingState = "dying"
 
-const standardJumpHeight = 16 * 3
+const standardJumpHeight = 16 * 3.1
 const standardJumpTime = 0.4
 const standardFallTime = 0.34
 const minimumJumpHeight = 16
 const coyoteTimeAmount = 0.16
-const fudge = 0.15
+const fudge = 0.001
 const runAcc = 20.0
-const maxRunVelocity = 120
-
-const hangEnabled = false
+const maxRunVelocity = 100
 
 type Player struct {
 	x                  float64
 	y                  float64
 	targetY            float64
-	frame              int
-	frames             int
 	sizex              float64
 	sizey              float64
 	drawOffsetX        float64
@@ -49,21 +44,54 @@ type Player struct {
 	alreadyAbortedJump bool
 	direction          int
 	targetVelocityX    float64
+	isFlip             bool
+	currentAnimation   string
+	animations         map[string]*Animation
 }
 
 func NewPlayer(game *Game) *Player {
 	p := &Player{
-		state:           playingState,
-		y:               common.ScreenHeight / 2,
-		x:               common.ScreenWidth / 2,
-		sizex:           16, // physical size
-		sizey:           16, // physical size
-		drawOffsetX:     8,  // just for drawing
-		drawOffsetY:     16, // just for drawing
-		drawSizex:       32, // just for drawing
-		drawSizey:       32,
-		lives:           2,
-		image:           game.images["player"],
+		state:            playingState,
+		y:                common.ScreenHeight / 2,
+		x:                common.ScreenWidth / 2,
+		sizex:            15, // physical size
+		sizey:            16, // physical size
+		drawOffsetX:      8,  // just for drawing
+		drawOffsetY:      16, // just for drawing
+		drawSizex:        32, // just for drawing
+		drawSizey:        32,
+		lives:            2,
+		currentAnimation: "idle",
+		animations: map[string]*Animation{
+			"run": {
+				image:           game.images["player-run"],
+				numFrames:       6,
+				size:            32,
+				frameTimeAmount: 0.08,
+				isLoop:          true,
+			},
+			"idle": {
+				image:           game.images["player-idle"],
+				numFrames:       1,
+				size:            32,
+				frameTimeAmount: 1,
+				isLoop:          true,
+			},
+			"jump": {
+				image:           game.images["player-jump"],
+				numFrames:       1,
+				size:            32,
+				frameTimeAmount: 1,
+				isLoop:          true,
+			},
+			"fall": {
+				image:           game.images["player-fall"],
+				numFrames:       1,
+				size:            32,
+				frameTimeAmount: 1,
+				isLoop:          true,
+			},
+		},
 		velocityY:       0,
 		velocityX:       0,
 		direction:       1,
@@ -73,21 +101,26 @@ func NewPlayer(game *Game) *Player {
 }
 
 func (r *Player) Update(delta float64, game *Game) {
+	r.animations[r.currentAnimation].Update(delta)
 	switch r.state {
 	case playingState:
 		var tryJump bool
-		var tryDown bool
 		r.targetVelocityX = 0
+		r.currentAnimation = "idle"
 		if ebiten.IsKeyPressed(ebiten.KeyArrowLeft) || ebiten.IsKeyPressed(ebiten.KeyA) {
 			r.direction = -1
 			r.targetVelocityX = -maxRunVelocity
+			r.isFlip = true
+			r.currentAnimation = "run"
 		}
 		if ebiten.IsKeyPressed(ebiten.KeyArrowRight) || ebiten.IsKeyPressed(ebiten.KeyD) {
 			r.direction = 1
 			r.targetVelocityX = maxRunVelocity
+			r.isFlip = false
+			r.currentAnimation = "run"
 		}
 		if ebiten.IsKeyPressed(ebiten.KeyArrowDown) || ebiten.IsKeyPressed(ebiten.KeyS) {
-			tryDown = true
+
 		}
 		if ebiten.IsKeyPressed(ebiten.KeyArrowUp) || ebiten.IsKeyPressed(ebiten.KeyW) {
 
@@ -106,7 +139,8 @@ func (r *Player) Update(delta float64, game *Game) {
 		oldy := r.y
 
 		newx := r.x + (delta * r.velocityX)
-		newy := r.y - (r.velocityY * delta) + (0.5 * gravity * delta * delta)
+		movey := (r.velocityY * delta) + (0.5 * gravity * delta * delta)
+		newy := r.y - movey
 		r.velocityY = r.velocityY + (gravity * delta)
 
 		var hitCeiling = false
@@ -133,37 +167,36 @@ func (r *Player) Update(delta float64, game *Game) {
 			hitWall = true
 		}
 
-		td = game.level.tiledGrid.GetTileData(int(oldx/common.TileSize), int(newy/common.TileSize))
+		td = game.level.tiledGrid.GetTileData(int(oldx/common.TileSize), int((newy-4)/common.TileSize))
 		if td.Block {
-			newy = float64(td.Y*common.TileSize) + common.TileSize + fudge
+			newy = float64(td.Y*common.TileSize) + common.TileSize + fudge + 4
 			if newy > 0 {
 				hitCeiling = true
 			}
 		}
 		td = game.level.tiledGrid.GetTileData(int(oldx/common.TileSize), int((newy+r.sizey)/common.TileSize))
 		if td.Block {
-			newy = float64(td.Y*common.TileSize) - common.TileSize - fudge
-			if newy > 0 {
-				hitFloor = true
-				r.velocityY = 0
-				r.coyoteTimer = coyoteTimeAmount
-			}
+			distance := float64(td.Y*common.TileSize) - (oldy + r.sizey)
+			newy = oldy + distance - fudge
+			hitFloor = true
+			r.velocityY = 0
+			r.coyoteTimer = coyoteTimeAmount
 		}
-		td = game.level.tiledGrid.GetTileData(int((oldx+r.sizex)/common.TileSize), int(newy/common.TileSize))
+		td = game.level.tiledGrid.GetTileData(int((oldx+r.sizex)/common.TileSize), int((newy-4)/common.TileSize))
 		if td.Block {
-			newy = float64(td.Y*common.TileSize) + common.TileSize + fudge
+			newy = float64(td.Y*common.TileSize) + common.TileSize + fudge + 4
 			if newy > 0 {
 				hitCeiling = true
 			}
 		}
 		td = game.level.tiledGrid.GetTileData(int((oldx+r.sizex)/common.TileSize), int((newy+r.sizey)/common.TileSize))
 		if td.Block {
-			newy = float64(td.Y*common.TileSize) - common.TileSize - fudge
-			if newy > 0 {
-				hitFloor = true
-				r.velocityY = 0
-				r.coyoteTimer = coyoteTimeAmount
-			}
+			distance := float64(td.Y*common.TileSize) - (oldy + r.sizey)
+			newy = oldy + distance - fudge
+			//newy = newy + movey
+			hitFloor = true
+			r.velocityY = 0
+			r.coyoteTimer = coyoteTimeAmount
 		}
 
 		r.x = newx
@@ -189,6 +222,14 @@ func (r *Player) Update(delta float64, game *Game) {
 		if hitFloor {
 			r.alreadyAbortedJump = false
 		}
+		if oldy != newy {
+			if r.velocityY < 0 {
+				r.currentAnimation = "fall"
+			}
+			if r.velocityY > 0 {
+				r.currentAnimation = "jump"
+			}
+		}
 		if hitCeiling {
 			r.alreadyAbortedJump = true
 			r.velocityY = -20
@@ -198,22 +239,6 @@ func (r *Player) Update(delta float64, game *Game) {
 			r.targetVelocityX = 0
 			r.velocityX = 0
 
-		}
-
-		if hangEnabled && !tryDown {
-			hangX := -2.0
-			if r.direction > 0 {
-				hangX = r.sizex + 2
-			}
-			tdOne := game.level.tiledGrid.GetTileData(int((r.x+hangX)/common.TileSize), int((r.y)/common.TileSize))
-			if tdOne.Block {
-				tdTwo := game.level.tiledGrid.GetTileData(int((r.x+hangX)/common.TileSize), int((r.y-4)/common.TileSize))
-				if !tdTwo.Block {
-					hitFloor = true
-					r.velocityY = 0
-					r.coyoteTimer = coyoteTimeAmount
-				}
-			}
 		}
 
 		if r.velocityX < r.targetVelocityX {
@@ -236,9 +261,15 @@ func (r *Player) Draw(camera common.Camera) {
 		return
 	}
 	op := &ebiten.DrawImageOptions{}
+	if r.isFlip {
+		op.GeoM.Scale(-1, 1)
+		op.GeoM.Translate(float64(r.drawSizex), 0)
+	}
+
 	op.GeoM.Translate(r.x-r.drawOffsetX, r.y-r.drawOffsetY)
 	op.GeoM.Scale(common.Scale, common.Scale)
-	camera.DrawImage(r.image.SubImage(image.Rect(r.frame*r.drawSizex, 0, (r.frame+1)*r.drawSizex, r.drawSizey)).(*ebiten.Image), op)
+
+	camera.DrawImage(r.animations[r.currentAnimation].GetCurrentFrame(), op)
 }
 
 func (r *Player) GetHit(game *Game) {
