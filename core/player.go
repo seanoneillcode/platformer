@@ -67,7 +67,7 @@ func NewPlayer(game *Game) *Player {
 				image:           game.images["player-run"],
 				numFrames:       6,
 				size:            32,
-				frameTimeAmount: 0.08,
+				frameTimeAmount: 0.1,
 				isLoop:          true,
 			},
 			"idle": {
