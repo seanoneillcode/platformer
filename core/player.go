@@ -57,7 +57,7 @@ func NewPlayer(game *Game) *Player {
 		state:            playingState,
 		y:                common.ScreenHeight / 2,
 		x:                common.ScreenWidth / 2,
-		sizex:            15, // physical size
+		sizex:            16, // physical size
 		sizey:            16, // physical size
 		drawOffsetX:      8,  // just for drawing
 		drawOffsetY:      16, // just for drawing
@@ -94,6 +94,13 @@ func NewPlayer(game *Game) *Player {
 				frameTimeAmount: 1,
 				isLoop:          true,
 			},
+			"climb": {
+				image:           game.images["player-climb"],
+				numFrames:       1,
+				size:            32,
+				frameTimeAmount: 1,
+				isLoop:          true,
+			},
 		},
 		velocityY:       0,
 		velocityX:       0,
@@ -110,6 +117,7 @@ func (r *Player) Update(delta float64, game *Game) {
 		var tryJump bool
 		var pressJump bool
 		var tryFall bool
+		var tryMovey = 0.0
 		r.targetVelocityX = 0
 		r.currentAnimation = "idle"
 		if ebiten.IsKeyPressed(ebiten.KeyArrowLeft) || ebiten.IsKeyPressed(ebiten.KeyA) {
@@ -126,9 +134,10 @@ func (r *Player) Update(delta float64, game *Game) {
 		}
 		if ebiten.IsKeyPressed(ebiten.KeyArrowDown) || ebiten.IsKeyPressed(ebiten.KeyS) {
 			tryFall = true
+			tryMovey = 1
 		}
 		if ebiten.IsKeyPressed(ebiten.KeyArrowUp) || ebiten.IsKeyPressed(ebiten.KeyW) {
-
+			tryMovey = -1
 		}
 		if ebiten.IsKeyPressed(ebiten.KeySpace) {
 			pressJump = true
@@ -177,13 +186,6 @@ func (r *Player) Update(delta float64, game *Game) {
 			hitWall = true
 		}
 
-		td = game.level.tiledGrid.GetTileData(int(oldx/common.TileSize), int((newy-4)/common.TileSize))
-		if td.Block {
-			newy = float64(td.Y*common.TileSize) + common.TileSize + fudge + 4
-			if newy > 0 {
-				hitCeiling = true
-			}
-		}
 		td = game.level.tiledGrid.GetTileData(int(oldx/common.TileSize), int((newy+r.sizey)/common.TileSize))
 		if td.Block {
 			distance := float64(td.Y*common.TileSize) - (oldy + r.sizey)
@@ -201,13 +203,37 @@ func (r *Player) Update(delta float64, game *Game) {
 				r.coyoteTimer = coyoteTimeAmount
 			}
 		}
-		td = game.level.tiledGrid.GetTileData(int((oldx+r.sizex)/common.TileSize), int((newy-4)/common.TileSize))
+		if td.Ladder && newy > oldy {
+			distance := float64(td.Y*common.TileSize) - (oldy + r.sizey)
+			if td.Platform && distance > -1 {
+
+			} else {
+				newy = oldy + (delta * maxRunVelocity * tryMovey)
+				hitFloor = true
+				r.velocityY = 0
+				r.coyoteTimer = coyoteTimeAmount
+				r.currentAnimation = "climb"
+			}
+		}
+		td = game.level.tiledGrid.GetTileData(int(oldx/common.TileSize), int((newy-4)/common.TileSize))
 		if td.Block {
 			newy = float64(td.Y*common.TileSize) + common.TileSize + fudge + 4
 			if newy > 0 {
 				hitCeiling = true
 			}
 		}
+		if td.Ladder {
+			if newy > oldy || (hitFloor && tryMovey < 0) {
+				newy = oldy + (delta * maxRunVelocity * tryMovey)
+				hitFloor = true
+				r.velocityY = 0
+				r.coyoteTimer = coyoteTimeAmount
+				if !hitFloor {
+					r.currentAnimation = "climb"
+				}
+			}
+		}
+
 		td = game.level.tiledGrid.GetTileData(int((oldx+r.sizex)/common.TileSize), int((newy+r.sizey)/common.TileSize))
 		if td.Block {
 			distance := float64(td.Y*common.TileSize) - (oldy + r.sizey)
@@ -223,6 +249,36 @@ func (r *Player) Update(delta float64, game *Game) {
 				hitFloor = true
 				r.velocityY = 0
 				r.coyoteTimer = coyoteTimeAmount
+			}
+		}
+		if td.Ladder && newy > oldy {
+			distance := float64(td.Y*common.TileSize) - (oldy + r.sizey)
+			if td.Platform && distance > -1 {
+
+			} else {
+				newy = oldy + (delta * maxRunVelocity * tryMovey)
+				hitFloor = true
+				r.velocityY = 0
+				r.coyoteTimer = coyoteTimeAmount
+				r.currentAnimation = "climb"
+			}
+		}
+		td = game.level.tiledGrid.GetTileData(int((oldx+r.sizex)/common.TileSize), int((newy-4)/common.TileSize))
+		if td.Block {
+			newy = float64(td.Y*common.TileSize) + common.TileSize + fudge + 4
+			if newy > 0 {
+				hitCeiling = true
+			}
+		}
+		if td.Ladder {
+			if newy > oldy || (hitFloor && tryMovey < 0) {
+				newy = oldy + (delta * maxRunVelocity * tryMovey)
+				hitFloor = true
+				r.velocityY = 0
+				r.coyoteTimer = coyoteTimeAmount
+				if !hitFloor {
+					r.currentAnimation = "climb"
+				}
 			}
 		}
 

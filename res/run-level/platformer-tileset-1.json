@@ -10,6 +10,29 @@
  "tileheight":16,
  "tiles":[
         {
+         "id":1,
+         "properties":[
+                {
+                 "name":"ladder",
+                 "type":"bool",
+                 "value":true
+                }]
+        }, 
+        {
+         "id":2,
+         "properties":[
+                {
+                 "name":"ladder",
+                 "type":"bool",
+                 "value":true
+                }, 
+                {
+                 "name":"platform",
+                 "type":"bool",
+                 "value":true
+                }]
+        }, 
+        {
          "id":20,
          "properties":[
                 {

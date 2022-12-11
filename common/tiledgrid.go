@@ -189,6 +189,7 @@ type TileData struct {
 	Y        int
 	Block    bool
 	Platform bool
+	Ladder   bool
 }
 
 func (tg *TiledGrid) GetTileData(x int, y int) *TileData {
@@ -197,6 +198,7 @@ func (tg *TiledGrid) GetTileData(x int, y int) *TileData {
 		Y:        y,
 		Block:    false,
 		Platform: false,
+		Ladder:   false,
 	}
 	index := (y * tg.Layers[0].Width) + x
 
@@ -224,7 +226,9 @@ func (tg *TiledGrid) GetTileData(x int, y int) *TileData {
 				if prop.Name == "platform" && prop.Value != nil {
 					td.Platform = (prop.Value).(bool)
 				}
-				break
+				if prop.Name == "ladder" && prop.Value != nil {
+					td.Ladder = (prop.Value).(bool)
+				}
 			}
 			break
 		}
