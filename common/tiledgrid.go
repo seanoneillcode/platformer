@@ -185,33 +185,31 @@ func (tg *TiledGrid) GetObjectData() []*ObjectData {
 }
 
 type TileData struct {
-	X     int
-	Y     int
-	Block bool
+	X        int
+	Y        int
+	Block    bool
+	Platform bool
 }
 
 func (tg *TiledGrid) GetTileData(x int, y int) *TileData {
 	td := TileData{
-		X: x,
-		Y: y,
+		X:        x,
+		Y:        y,
+		Block:    false,
+		Platform: false,
 	}
 	index := (y * tg.Layers[0].Width) + x
 
 	if index < 0 || index >= len(tg.Layers[0].Data) {
-		// no tile here
-		td.Block = false
 		return &td
 	}
 
 	if x < 0 || y < 0 {
-		// no tile here
-		td.Block = false
 		return &td
 	}
 
 	tileSetIndex := tg.Layers[0].Data[index]
 	if tileSetIndex == 0 {
-		td.Block = false
 		return &td
 	}
 
@@ -222,6 +220,9 @@ func (tg *TiledGrid) GetTileData(x int, y int) *TileData {
 			for _, prop := range tile.Properties {
 				if prop.Name == "block" && prop.Value != nil {
 					td.Block = (prop.Value).(bool)
+				}
+				if prop.Name == "platform" && prop.Value != nil {
+					td.Platform = (prop.Value).(bool)
 				}
 				break
 			}

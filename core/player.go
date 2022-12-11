@@ -2,6 +2,7 @@ package core
 
 import (
 	"github.com/hajimehoshi/ebiten/v2"
+	"github.com/hajimehoshi/ebiten/v2/inpututil"
 	"platformer/common"
 )
 
@@ -10,12 +11,13 @@ const dyingState = "dying"
 
 const standardJumpHeight = 16 * 3.1
 const standardJumpTime = 0.4
-const standardFallTime = 0.34
+const standardFallTime = 0.36
 const minimumJumpHeight = 16
 const coyoteTimeAmount = 0.16
 const fudge = 0.001
 const runAcc = 20.0
 const maxRunVelocity = 100
+const tryJumpMarginTime = 0.1
 
 type Player struct {
 	x                  float64
@@ -47,6 +49,7 @@ type Player struct {
 	isFlip             bool
 	currentAnimation   string
 	animations         map[string]*Animation
+	tryJumpTimer       float64
 }
 
 func NewPlayer(game *Game) *Player {
@@ -105,6 +108,8 @@ func (r *Player) Update(delta float64, game *Game) {
 	switch r.state {
 	case playingState:
 		var tryJump bool
+		var pressJump bool
+		var tryFall bool
 		r.targetVelocityX = 0
 		r.currentAnimation = "idle"
 		if ebiten.IsKeyPressed(ebiten.KeyArrowLeft) || ebiten.IsKeyPressed(ebiten.KeyA) {
@@ -120,13 +125,18 @@ func (r *Player) Update(delta float64, game *Game) {
 			r.currentAnimation = "run"
 		}
 		if ebiten.IsKeyPressed(ebiten.KeyArrowDown) || ebiten.IsKeyPressed(ebiten.KeyS) {
-
+			tryFall = true
 		}
 		if ebiten.IsKeyPressed(ebiten.KeyArrowUp) || ebiten.IsKeyPressed(ebiten.KeyW) {
 
 		}
 		if ebiten.IsKeyPressed(ebiten.KeySpace) {
+			pressJump = true
+		}
+		r.tryJumpTimer = r.tryJumpTimer - delta
+		if inpututil.IsKeyJustPressed(ebiten.KeySpace) {
 			tryJump = true
+			r.tryJumpTimer = tryJumpMarginTime
 		}
 
 		time := standardJumpTime
@@ -182,6 +192,15 @@ func (r *Player) Update(delta float64, game *Game) {
 			r.velocityY = 0
 			r.coyoteTimer = coyoteTimeAmount
 		}
+		if !tryFall && td.Platform && newy > oldy {
+			distance := float64(td.Y*common.TileSize) - (oldy + r.sizey)
+			if distance > -1 {
+				newy = oldy + distance - fudge
+				hitFloor = true
+				r.velocityY = 0
+				r.coyoteTimer = coyoteTimeAmount
+			}
+		}
 		td = game.level.tiledGrid.GetTileData(int((oldx+r.sizex)/common.TileSize), int((newy-4)/common.TileSize))
 		if td.Block {
 			newy = float64(td.Y*common.TileSize) + common.TileSize + fudge + 4
@@ -193,22 +212,31 @@ func (r *Player) Update(delta float64, game *Game) {
 		if td.Block {
 			distance := float64(td.Y*common.TileSize) - (oldy + r.sizey)
 			newy = oldy + distance - fudge
-			//newy = newy + movey
 			hitFloor = true
 			r.velocityY = 0
 			r.coyoteTimer = coyoteTimeAmount
+		}
+		if !tryFall && td.Platform && newy > oldy {
+			distance := float64(td.Y*common.TileSize) - (oldy + r.sizey)
+			if distance > -1 {
+				newy = oldy + distance - fudge
+				hitFloor = true
+				r.velocityY = 0
+				r.coyoteTimer = coyoteTimeAmount
+			}
 		}
 
 		r.x = newx
 		r.y = newy
 
-		if tryJump {
+		if tryJump || r.tryJumpTimer > 0 {
 			if hitFloor || r.coyoteTimer > 0 {
 				r.coyoteTimer = 0
 				r.velocityY = (2 * standardJumpHeight) / standardJumpTime
 				r.jumpTimer = 0
 			}
-		} else {
+		}
+		if !pressJump {
 			// if player is currently jumping in the first half phase of jumping
 			if r.jumpTimer < standardJumpTime && r.wasPressingJump && !r.alreadyAbortedJump {
 				r.alreadyAbortedJump = true
@@ -234,7 +262,7 @@ func (r *Player) Update(delta float64, game *Game) {
 			r.alreadyAbortedJump = true
 			r.velocityY = -20
 		}
-		r.wasPressingJump = tryJump
+		r.wasPressingJump = pressJump
 		if hitWall {
 			r.targetVelocityX = 0
 			r.velocityX = 0
