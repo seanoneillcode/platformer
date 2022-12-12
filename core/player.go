@@ -235,12 +235,13 @@ func (r *Player) Update(delta float64, game *Game) {
 		if td.Ladder {
 			if newy > oldy || (hitFloor && tryMovey < 0) {
 				newy = oldy + (delta * maxRunVelocity * tryMovey)
-				hitFloor = true
-				r.velocityY = 0
-				r.coyoteTimer = coyoteTimeAmount
 				if !hitFloor {
 					r.currentAnimation = "climb"
 				}
+				hitFloor = true
+				r.velocityY = 0
+				r.coyoteTimer = coyoteTimeAmount
+
 			}
 		}
 
@@ -286,12 +287,12 @@ func (r *Player) Update(delta float64, game *Game) {
 		if td.Ladder {
 			if newy > oldy || (hitFloor && tryMovey < 0) {
 				newy = oldy + (delta * maxRunVelocity * tryMovey)
-				hitFloor = true
-				r.velocityY = 0
-				r.coyoteTimer = coyoteTimeAmount
 				if !hitFloor {
 					r.currentAnimation = "climb"
 				}
+				hitFloor = true
+				r.velocityY = 0
+				r.coyoteTimer = coyoteTimeAmount
 			}
 		}
 
