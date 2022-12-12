@@ -11,7 +11,7 @@ const dyingState = "dying"
 
 const standardJumpHeight = 16 * 3.1
 const standardJumpTime = 0.4
-const standardFallTime = 0.36
+const standardFallTime = 0.4
 const minimumJumpHeight = 16
 const coyoteTimeAmount = 0.16
 const fudge = 0.001
@@ -165,37 +165,45 @@ func (r *Player) Update(delta float64, game *Game) {
 		var hitCeiling = false
 		var hitFloor = false
 		var hitWall = false
-		td := game.level.tiledGrid.GetTileData(int(newx/common.TileSize), int(oldy/common.TileSize))
+		tx, ty := int(newx/common.TileSize), int(oldy/common.TileSize)
+		td := game.level.tiledGrid.GetTileData(tx, ty)
 		if td.Block {
-			newx = float64(td.X*common.TileSize) + common.TileSize + fudge
-			hitWall = true
-		}
-		td = game.level.tiledGrid.GetTileData(int((newx+r.sizex)/common.TileSize), int(oldy/common.TileSize))
-		if td.Block {
-			newx = float64(td.X*common.TileSize) - r.sizex - fudge
-			hitWall = true
-		}
-		td = game.level.tiledGrid.GetTileData(int(newx/common.TileSize), int((oldy+r.sizey)/common.TileSize))
-		if td.Block {
-			newx = float64(td.X*common.TileSize) + common.TileSize + fudge
-			hitWall = true
-		}
-		td = game.level.tiledGrid.GetTileData(int((newx+r.sizex)/common.TileSize), int((oldy+r.sizey)/common.TileSize))
-		if td.Block {
-			newx = float64(td.X*common.TileSize) - r.sizex - fudge
+			newx = float64(tx*common.TileSize) + common.TileSize + fudge
 			hitWall = true
 		}
 
-		td = game.level.tiledGrid.GetTileData(int(oldx/common.TileSize), int((newy+r.sizey)/common.TileSize))
+		tx, ty = int((newx+r.sizex)/common.TileSize), int(oldy/common.TileSize)
+		td = game.level.tiledGrid.GetTileData(tx, ty)
 		if td.Block {
-			distance := float64(td.Y*common.TileSize) - (oldy + r.sizey)
+			newx = float64(tx*common.TileSize) - r.sizex - fudge
+			hitWall = true
+		}
+
+		tx, ty = int(newx/common.TileSize), int((oldy+r.sizey)/common.TileSize)
+		td = game.level.tiledGrid.GetTileData(tx, ty)
+		if td.Block {
+			newx = float64(tx*common.TileSize) + common.TileSize + fudge
+			hitWall = true
+		}
+
+		tx, ty = int((newx+r.sizex)/common.TileSize), int((oldy+r.sizey)/common.TileSize)
+		td = game.level.tiledGrid.GetTileData(tx, ty)
+		if td.Block {
+			newx = float64(tx*common.TileSize) - r.sizex - fudge
+			hitWall = true
+		}
+
+		tx, ty = int(oldx/common.TileSize), int((newy+r.sizey)/common.TileSize)
+		td = game.level.tiledGrid.GetTileData(tx, ty)
+		if td.Block {
+			distance := float64(ty*common.TileSize) - (oldy + r.sizey)
 			newy = oldy + distance - fudge
 			hitFloor = true
 			r.velocityY = 0
 			r.coyoteTimer = coyoteTimeAmount
 		}
 		if !tryFall && td.Platform && newy > oldy {
-			distance := float64(td.Y*common.TileSize) - (oldy + r.sizey)
+			distance := float64(ty*common.TileSize) - (oldy + r.sizey)
 			if distance > -1 {
 				newy = oldy + distance - fudge
 				hitFloor = true
@@ -204,7 +212,7 @@ func (r *Player) Update(delta float64, game *Game) {
 			}
 		}
 		if td.Ladder && newy > oldy {
-			distance := float64(td.Y*common.TileSize) - (oldy + r.sizey)
+			distance := float64(ty*common.TileSize) - (oldy + r.sizey)
 			if td.Platform && distance > -1 {
 
 			} else {
@@ -215,9 +223,11 @@ func (r *Player) Update(delta float64, game *Game) {
 				r.currentAnimation = "climb"
 			}
 		}
-		td = game.level.tiledGrid.GetTileData(int(oldx/common.TileSize), int((newy-4)/common.TileSize))
+
+		tx, ty = int(oldx/common.TileSize), int((newy-4)/common.TileSize)
+		td = game.level.tiledGrid.GetTileData(tx, ty)
 		if td.Block {
-			newy = float64(td.Y*common.TileSize) + common.TileSize + fudge + 4
+			newy = float64(ty*common.TileSize) + common.TileSize + fudge + 4
 			if newy > 0 {
 				hitCeiling = true
 			}
@@ -234,16 +244,17 @@ func (r *Player) Update(delta float64, game *Game) {
 			}
 		}
 
-		td = game.level.tiledGrid.GetTileData(int((oldx+r.sizex)/common.TileSize), int((newy+r.sizey)/common.TileSize))
+		tx, ty = int((oldx+r.sizex)/common.TileSize), int((newy+r.sizey)/common.TileSize)
+		td = game.level.tiledGrid.GetTileData(tx, ty)
 		if td.Block {
-			distance := float64(td.Y*common.TileSize) - (oldy + r.sizey)
+			distance := float64(ty*common.TileSize) - (oldy + r.sizey)
 			newy = oldy + distance - fudge
 			hitFloor = true
 			r.velocityY = 0
 			r.coyoteTimer = coyoteTimeAmount
 		}
 		if !tryFall && td.Platform && newy > oldy {
-			distance := float64(td.Y*common.TileSize) - (oldy + r.sizey)
+			distance := float64(ty*common.TileSize) - (oldy + r.sizey)
 			if distance > -1 {
 				newy = oldy + distance - fudge
 				hitFloor = true
@@ -252,7 +263,7 @@ func (r *Player) Update(delta float64, game *Game) {
 			}
 		}
 		if td.Ladder && newy > oldy {
-			distance := float64(td.Y*common.TileSize) - (oldy + r.sizey)
+			distance := float64(ty*common.TileSize) - (oldy + r.sizey)
 			if td.Platform && distance > -1 {
 
 			} else {
@@ -263,9 +274,11 @@ func (r *Player) Update(delta float64, game *Game) {
 				r.currentAnimation = "climb"
 			}
 		}
-		td = game.level.tiledGrid.GetTileData(int((oldx+r.sizex)/common.TileSize), int((newy-4)/common.TileSize))
+
+		tx, ty = int((oldx+r.sizex)/common.TileSize), int((newy-4)/common.TileSize)
+		td = game.level.tiledGrid.GetTileData(tx, ty)
 		if td.Block {
-			newy = float64(td.Y*common.TileSize) + common.TileSize + fudge + 4
+			newy = float64(ty*common.TileSize) + common.TileSize + fudge + 4
 			if newy > 0 {
 				hitCeiling = true
 			}

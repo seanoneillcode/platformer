@@ -19,7 +19,8 @@ const (
 type TiledGrid struct {
 	Layers            []*Layer            `json:"layers"`
 	TileSetReferences []*TileSetReference `json:"tilesets"`
-	TileSet           []*TileSet
+	TileSet           *TileSet
+	TileMap           map[int]*TileData
 }
 
 type Layer struct {
@@ -79,9 +80,25 @@ func NewTileGrid(fileName string) *TiledGrid {
 		log.Fatal("parsing config file", err.Error())
 	}
 
-	tiledGrid.TileSet = []*TileSet{}
-	for _, ref := range tiledGrid.TileSetReferences {
-		tiledGrid.TileSet = append(tiledGrid.TileSet, loadTileSet(levelDirectory, ref))
+	tiledGrid.TileSet = loadTileSet(levelDirectory, tiledGrid.TileSetReferences[0])
+
+	tiledGrid.TileMap = map[int]*TileData{}
+	for _, tile := range tiledGrid.TileSet.Tiles {
+
+		td := &TileData{}
+		for _, prop := range tile.Properties {
+			if prop.Name == "block" && prop.Value != nil {
+				td.Block = (prop.Value).(bool)
+			}
+			if prop.Name == "platform" && prop.Value != nil {
+				td.Platform = (prop.Value).(bool)
+			}
+			if prop.Name == "ladder" && prop.Value != nil {
+				td.Ladder = (prop.Value).(bool)
+			}
+		}
+		tileId := tile.Id
+		tiledGrid.TileMap[tileId] = td
 	}
 
 	return &tiledGrid
@@ -122,7 +139,7 @@ func (tg *TiledGrid) Draw(camera Camera) {
 				continue
 			}
 
-			ts := tg.getTileSetForIndex(tileIndex)
+			ts := tg.TileSet
 
 			op := &ebiten.DrawImageOptions{}
 			op.GeoM.Translate(float64(((i)%layer.Width)*TileSize), float64(((i)/layer.Height)*TileSize))
@@ -134,16 +151,6 @@ func (tg *TiledGrid) Draw(camera Camera) {
 			camera.DrawImage(ts.image.SubImage(image.Rect(sx, sy, sx+TileSize, sy+TileSize)).(*ebiten.Image), op)
 		}
 	}
-}
-
-func (tg *TiledGrid) getTileSetForIndex(index int) *TileSet {
-	for i, tileSet := range tg.TileSet {
-		if i == len(tg.TileSet)-1 || tg.TileSet[i+1].FirstGid > index {
-			return tileSet
-		}
-	}
-	// should never happen
-	return nil
 }
 
 type ObjectData struct {
@@ -185,54 +192,28 @@ func (tg *TiledGrid) GetObjectData() []*ObjectData {
 }
 
 type TileData struct {
-	X        int
-	Y        int
 	Block    bool
 	Platform bool
 	Ladder   bool
 }
 
+var EmptyTile = &TileData{}
+
 func (tg *TiledGrid) GetTileData(x int, y int) *TileData {
-	td := TileData{
-		X:        x,
-		Y:        y,
-		Block:    false,
-		Platform: false,
-		Ladder:   false,
-	}
 	index := (y * tg.Layers[0].Width) + x
-
 	if index < 0 || index >= len(tg.Layers[0].Data) {
-		return &td
+		return EmptyTile
 	}
-
 	if x < 0 || y < 0 {
-		return &td
+		return EmptyTile
 	}
-
 	tileSetIndex := tg.Layers[0].Data[index]
 	if tileSetIndex == 0 {
-		return &td
+		return EmptyTile
 	}
-
-	ts := tg.getTileSetForIndex(tileSetIndex)
-
-	for _, tile := range ts.Tiles {
-		if tile.Id == tileSetIndex-ts.FirstGid {
-			for _, prop := range tile.Properties {
-				if prop.Name == "block" && prop.Value != nil {
-					td.Block = (prop.Value).(bool)
-				}
-				if prop.Name == "platform" && prop.Value != nil {
-					td.Platform = (prop.Value).(bool)
-				}
-				if prop.Name == "ladder" && prop.Value != nil {
-					td.Ladder = (prop.Value).(bool)
-				}
-			}
-			break
-		}
+	result := tg.TileMap[tileSetIndex-tg.TileSet.FirstGid]
+	if result == nil {
+		return EmptyTile
 	}
-
-	return &td
+	return result
 }
