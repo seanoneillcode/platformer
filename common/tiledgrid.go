@@ -142,7 +142,8 @@ func (tg *TiledGrid) Draw(camera Camera) {
 			ts := tg.TileSet
 
 			op := &ebiten.DrawImageOptions{}
-			op.GeoM.Translate(float64(((i)%layer.Width)*TileSize), float64(((i)/layer.Height)*TileSize))
+			px, py := float64(((i)%layer.Width)*TileSize), float64(((i)/layer.Width)*TileSize)
+			op.GeoM.Translate(px, py)
 			op.GeoM.Scale(Scale, Scale)
 
 			sx := ((tileIndex - ts.FirstGid) % ts.numTilesX) * TileSize
