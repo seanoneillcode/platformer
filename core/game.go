@@ -26,7 +26,7 @@ func NewGame() *Game {
 		},
 		lastUpdateCalled: time.Now(),
 	}
-	r.LoadLevel("long-level")
+	r.LoadLevel("run-level")
 	return r
 }
 

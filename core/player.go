@@ -17,7 +17,9 @@ const coyoteTimeAmount = 0.16
 const fudge = 0.001
 const runAcc = 20.0
 const maxRunVelocity = 100
+const ladderVelocity = 70
 const tryJumpMarginTime = 0.1
+const ladderGrabAllowance = 8.0
 
 type Player struct {
 	x                  float64
@@ -44,12 +46,12 @@ type Player struct {
 	jumpTimer          float64
 	wasPressingJump    bool
 	alreadyAbortedJump bool
-	direction          int
 	targetVelocityX    float64
 	isFlip             bool
 	currentAnimation   string
 	animations         map[string]*Animation
 	tryJumpTimer       float64
+	lockedToLadder     bool
 }
 
 func NewPlayer(game *Game) *Player {
@@ -104,7 +106,6 @@ func NewPlayer(game *Game) *Player {
 		},
 		velocityY:       0,
 		velocityX:       0,
-		direction:       1,
 		targetVelocityX: 0,
 	}
 	return p
@@ -120,17 +121,22 @@ func (r *Player) Update(delta float64, game *Game) {
 		var tryMovey = 0.0
 		r.targetVelocityX = 0
 		r.currentAnimation = "idle"
+
 		if ebiten.IsKeyPressed(ebiten.KeyArrowLeft) || ebiten.IsKeyPressed(ebiten.KeyA) {
-			r.direction = -1
 			r.targetVelocityX = -maxRunVelocity
 			r.isFlip = true
 			r.currentAnimation = "run"
+			if r.lockedToLadder {
+				r.targetVelocityX = -maxRunVelocity / 2.0
+			}
 		}
 		if ebiten.IsKeyPressed(ebiten.KeyArrowRight) || ebiten.IsKeyPressed(ebiten.KeyD) {
-			r.direction = 1
 			r.targetVelocityX = maxRunVelocity
 			r.isFlip = false
 			r.currentAnimation = "run"
+			if r.lockedToLadder {
+				r.targetVelocityX = maxRunVelocity / 2.0
+			}
 		}
 		if ebiten.IsKeyPressed(ebiten.KeyArrowDown) || ebiten.IsKeyPressed(ebiten.KeyS) {
 			tryFall = true
@@ -157,43 +163,49 @@ func (r *Player) Update(delta float64, game *Game) {
 		oldx := r.x
 		oldy := r.y
 
+		partial := 2.0
+
 		newx := r.x + (delta * r.velocityX)
-		movey := (r.velocityY * delta) + (0.5 * gravity * delta * delta)
+		movey := 0.0
+		if !r.lockedToLadder {
+			movey = (r.velocityY * delta) + (0.5 * gravity * delta * delta)
+		}
 		newy := r.y - movey
 		r.velocityY = r.velocityY + (gravity * delta)
 
-		var hitCeiling = false
-		var hitFloor = false
 		var hitWall = false
-		tx, ty := int(newx/common.TileSize), int(oldy/common.TileSize)
+		tx, ty := int((newx+partial)/common.TileSize), int(oldy/common.TileSize)
 		td := game.level.tiledGrid.GetTileData(tx, ty)
 		if td.Block {
-			newx = float64(tx*common.TileSize) + common.TileSize + fudge
+			newx = float64(tx*common.TileSize) + common.TileSize + fudge - partial
 			hitWall = true
 		}
 
-		tx, ty = int((newx+r.sizex)/common.TileSize), int(oldy/common.TileSize)
+		tx, ty = int(((newx+partial)+(r.sizex-partial))/common.TileSize), int(oldy/common.TileSize)
 		td = game.level.tiledGrid.GetTileData(tx, ty)
 		if td.Block {
-			newx = float64(tx*common.TileSize) - r.sizex - fudge
+			newx = float64(tx*common.TileSize) - (r.sizex - partial) - fudge - partial
 			hitWall = true
 		}
 
-		tx, ty = int(newx/common.TileSize), int((oldy+r.sizey)/common.TileSize)
+		tx, ty = int((newx+partial)/common.TileSize), int((oldy+r.sizey)/common.TileSize)
 		td = game.level.tiledGrid.GetTileData(tx, ty)
 		if td.Block {
-			newx = float64(tx*common.TileSize) + common.TileSize + fudge
+			newx = float64(tx*common.TileSize) + common.TileSize + fudge - partial
 			hitWall = true
 		}
 
-		tx, ty = int((newx+r.sizex)/common.TileSize), int((oldy+r.sizey)/common.TileSize)
+		tx, ty = int(((newx+partial)+(r.sizex-partial))/common.TileSize), int((oldy+r.sizey)/common.TileSize)
 		td = game.level.tiledGrid.GetTileData(tx, ty)
 		if td.Block {
-			newx = float64(tx*common.TileSize) - r.sizex - fudge
+			newx = float64(tx*common.TileSize) - (r.sizex - partial) - fudge - partial
 			hitWall = true
 		}
 
-		tx, ty = int(oldx/common.TileSize), int((newy+r.sizey)/common.TileSize)
+		var hitCeiling = false
+		var hitFloor = false
+
+		tx, ty = int((oldx+partial)/common.TileSize), int((newy+r.sizey)/common.TileSize)
 		td = game.level.tiledGrid.GetTileData(tx, ty)
 		if td.Block {
 			distance := float64(ty*common.TileSize) - (oldy + r.sizey)
@@ -211,20 +223,8 @@ func (r *Player) Update(delta float64, game *Game) {
 				r.coyoteTimer = coyoteTimeAmount
 			}
 		}
-		if td.Ladder && newy > oldy {
-			distance := float64(ty*common.TileSize) - (oldy + r.sizey)
-			if td.Platform && distance > -1 {
 
-			} else {
-				newy = oldy + (delta * maxRunVelocity * tryMovey)
-				hitFloor = true
-				r.velocityY = 0
-				r.coyoteTimer = coyoteTimeAmount
-				r.currentAnimation = "climb"
-			}
-		}
-
-		tx, ty = int(oldx/common.TileSize), int((newy-4)/common.TileSize)
+		tx, ty = int((oldx+partial)/common.TileSize), int((newy-4)/common.TileSize)
 		td = game.level.tiledGrid.GetTileData(tx, ty)
 		if td.Block {
 			newy = float64(ty*common.TileSize) + common.TileSize + fudge + 4
@@ -232,20 +232,8 @@ func (r *Player) Update(delta float64, game *Game) {
 				hitCeiling = true
 			}
 		}
-		if td.Ladder {
-			if newy > oldy || (hitFloor && tryMovey < 0) {
-				newy = oldy + (delta * maxRunVelocity * tryMovey)
-				if !hitFloor {
-					r.currentAnimation = "climb"
-				}
-				hitFloor = true
-				r.velocityY = 0
-				r.coyoteTimer = coyoteTimeAmount
 
-			}
-		}
-
-		tx, ty = int((oldx+r.sizex)/common.TileSize), int((newy+r.sizey)/common.TileSize)
+		tx, ty = int(((oldx+partial)+(r.sizex-partial))/common.TileSize), int((newy+r.sizey)/common.TileSize)
 		td = game.level.tiledGrid.GetTileData(tx, ty)
 		if td.Block {
 			distance := float64(ty*common.TileSize) - (oldy + r.sizey)
@@ -263,20 +251,8 @@ func (r *Player) Update(delta float64, game *Game) {
 				r.coyoteTimer = coyoteTimeAmount
 			}
 		}
-		if td.Ladder && newy > oldy {
-			distance := float64(ty*common.TileSize) - (oldy + r.sizey)
-			if td.Platform && distance > -1 {
 
-			} else {
-				newy = oldy + (delta * maxRunVelocity * tryMovey)
-				hitFloor = true
-				r.velocityY = 0
-				r.coyoteTimer = coyoteTimeAmount
-				r.currentAnimation = "climb"
-			}
-		}
-
-		tx, ty = int((oldx+r.sizex)/common.TileSize), int((newy-4)/common.TileSize)
+		tx, ty = int(((oldx+partial)+(r.sizex-partial))/common.TileSize), int((newy-4)/common.TileSize)
 		td = game.level.tiledGrid.GetTileData(tx, ty)
 		if td.Block {
 			newy = float64(ty*common.TileSize) + common.TileSize + fudge + 4
@@ -284,23 +260,55 @@ func (r *Player) Update(delta float64, game *Game) {
 				hitCeiling = true
 			}
 		}
+
+		var touchingLadder = false
+		tx, ty = int((oldx+(r.sizex/2.0))/common.TileSize), int((oldy+4)/common.TileSize)
+		td = game.level.tiledGrid.GetTileData(tx, ty)
 		if td.Ladder {
-			if newy > oldy || (hitFloor && tryMovey < 0) {
-				newy = oldy + (delta * maxRunVelocity * tryMovey)
-				if !hitFloor {
-					r.currentAnimation = "climb"
+			touchingLadder = true
+			if tryMovey != 0 {
+				middle := float64(tx * common.TileSize)
+				left, right := middle-ladderGrabAllowance, middle+ladderGrabAllowance
+				if oldx > left && oldx < right {
+					r.lockedToLadder = true
+					newy = oldy + (delta * ladderVelocity * tryMovey)
 				}
-				hitFloor = true
-				r.velocityY = 0
-				r.coyoteTimer = coyoteTimeAmount
 			}
+
+		}
+		tx, ty = int((oldx+(r.sizex/2.0))/common.TileSize), int((oldy+r.sizey)/common.TileSize)
+		td = game.level.tiledGrid.GetTileData(tx, ty)
+		if td.Ladder {
+			touchingLadder = true
+			if tryMovey != 0 {
+				middle := float64(tx * common.TileSize)
+				left, right := middle-ladderGrabAllowance, middle+ladderGrabAllowance
+				if oldx > left && oldx < right {
+					r.lockedToLadder = true
+					newy = oldy + (delta * ladderVelocity * tryMovey)
+
+					// if move down, check for block
+					if tryMovey == 1 {
+						tx, ty = int((oldx+(r.sizex/2.0))/common.TileSize), int((newy+r.sizey)/common.TileSize)
+						td = game.level.tiledGrid.GetTileData(tx, ty)
+						if td.Block {
+							r.lockedToLadder = false
+							newy = oldy
+						}
+					}
+				}
+			}
+		}
+		if !touchingLadder {
+			r.lockedToLadder = false
 		}
 
 		r.x = newx
 		r.y = newy
 
 		if tryJump || r.tryJumpTimer > 0 {
-			if hitFloor || r.coyoteTimer > 0 {
+			if hitFloor || r.coyoteTimer > 0 || r.lockedToLadder {
+				r.lockedToLadder = false
 				r.coyoteTimer = 0
 				r.velocityY = (2 * standardJumpHeight) / standardJumpTime
 				r.jumpTimer = 0
@@ -318,6 +326,11 @@ func (r *Player) Update(delta float64, game *Game) {
 			r.coyoteTimer = r.coyoteTimer - delta
 		}
 		if hitFloor {
+			r.lockedToLadder = false
+		}
+		if r.lockedToLadder {
+			r.currentAnimation = "climb"
+			r.velocityY = 0
 			r.alreadyAbortedJump = false
 		}
 		if oldy != newy {
@@ -336,7 +349,9 @@ func (r *Player) Update(delta float64, game *Game) {
 		if hitWall {
 			r.targetVelocityX = 0
 			r.velocityX = 0
-
+		}
+		if r.lockedToLadder {
+			//r.targetVelocityX = 0
 		}
 
 		if r.velocityX < r.targetVelocityX {
