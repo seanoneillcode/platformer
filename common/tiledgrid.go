@@ -14,6 +14,8 @@ import (
 
 const (
 	resourceDirectory = "res/"
+	groundLayer       = "ground"
+	backgroundLayer   = "background"
 )
 
 type TiledGrid struct {
@@ -21,12 +23,14 @@ type TiledGrid struct {
 	TileSetReferences []*TileSetReference `json:"tilesets"`
 	TileSet           *TileSet
 	TileMap           map[int]*TileData
+	GroundLayer       *Layer
 }
 
 type Layer struct {
 	Data    []int         `json:"Data"`
 	Height  int           `json:"height"`
 	Width   int           `json:"width"`
+	Name    string        `json:"name"`
 	Objects []TiledObject `json:"objects"`
 }
 
@@ -78,6 +82,12 @@ func NewTileGrid(fileName string) *TiledGrid {
 	jsonParser := json.NewDecoder(levelFile)
 	if err = jsonParser.Decode(&tiledGrid); err != nil {
 		log.Fatal("parsing config file", err.Error())
+	}
+	for _, l := range tiledGrid.Layers {
+		if l.Name == groundLayer {
+			tiledGrid.GroundLayer = l
+			break
+		}
 	}
 
 	tiledGrid.TileSet = loadTileSet(levelDirectory, tiledGrid.TileSetReferences[0])
@@ -170,25 +180,25 @@ type ObjectProperty struct {
 
 func (tg *TiledGrid) GetObjectData() []*ObjectData {
 	var ods []*ObjectData
-	for _, l := range tg.Layers {
-		for _, obj := range l.Objects {
-			od := &ObjectData{
-				Name:       obj.Name,
-				ObjectType: obj.Type,
-				X:          obj.X,
-				Y:          obj.Y,
-				Properties: []*ObjectProperty{},
-			}
-			for _, p := range obj.Properties {
-				od.Properties = append(od.Properties, &ObjectProperty{
-					Name:    p.Name,
-					ObjType: p.Type,
-					Value:   p.Value,
-				})
-			}
-			ods = append(ods, od)
+
+	for _, obj := range tg.GroundLayer.Objects {
+		od := &ObjectData{
+			Name:       obj.Name,
+			ObjectType: obj.Type,
+			X:          obj.X,
+			Y:          obj.Y,
+			Properties: []*ObjectProperty{},
 		}
+		for _, p := range obj.Properties {
+			od.Properties = append(od.Properties, &ObjectProperty{
+				Name:    p.Name,
+				ObjType: p.Type,
+				Value:   p.Value,
+			})
+		}
+		ods = append(ods, od)
 	}
+
 	return ods
 }
 
@@ -201,14 +211,15 @@ type TileData struct {
 var EmptyTile = &TileData{}
 
 func (tg *TiledGrid) GetTileData(x int, y int) *TileData {
-	index := (y * tg.Layers[0].Width) + x
-	if index < 0 || index >= len(tg.Layers[0].Data) {
+
+	index := (y * tg.GroundLayer.Width) + x
+	if index < 0 || index >= len(tg.GroundLayer.Data) {
 		return EmptyTile
 	}
 	if x < 0 || y < 0 {
 		return EmptyTile
 	}
-	tileSetIndex := tg.Layers[0].Data[index]
+	tileSetIndex := tg.GroundLayer.Data[index]
 	if tileSetIndex == 0 {
 		return EmptyTile
 	}

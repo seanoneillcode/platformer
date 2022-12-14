@@ -57,7 +57,7 @@ type Player struct {
 func NewPlayer(game *Game) *Player {
 	p := &Player{
 		state:            playingState,
-		x:                3 * common.TileSize,
+		x:                19 * common.TileSize,
 		y:                12 * common.TileSize,
 		sizex:            16, // physical size
 		sizey:            16, // physical size
