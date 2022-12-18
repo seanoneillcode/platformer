@@ -22,12 +22,26 @@ func NewCamera() *Camera {
 	}
 }
 
-func (c *Camera) Update(delta float64) {
+func (c *Camera) Update(delta float64, game *Game) {
 	c.buffer.Clear()
 	if c.target != nil {
 		tx, ty := c.target.GetPos()
 		c.x = tx - (common.ScreenWidth / 2) + (common.TileSize / 2)
 		c.y = ty - (common.ScreenHeight / 2) + (common.TileSize / 2)
+	}
+	if c.x < 0 {
+		c.x = 0
+	}
+	if c.y < 0 {
+		c.y = 0
+	}
+	maxWidth := float64((game.level.tiledGrid.GroundLayer.Width * common.TileSize) - common.ScreenWidth)
+	if c.x > maxWidth {
+		c.x = maxWidth
+	}
+	maxHeight := float64((game.level.tiledGrid.GroundLayer.Height * common.TileSize) - common.ScreenHeight)
+	if c.y > maxHeight {
+		c.y = maxHeight
 	}
 }
 

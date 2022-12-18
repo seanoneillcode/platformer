@@ -27,8 +27,8 @@
                  "type":"",
                  "visible":true,
                  "width":16,
-                 "x":2144,
-                 "y":112
+                 "x":304,
+                 "y":288
                 }, 
                 {
                  "height":32,
@@ -44,7 +44,7 @@
                  "type":"",
                  "visible":true,
                  "width":16,
-                 "x":2272,
+                 "x":2288,
                  "y":112
                 }],
          "opacity":1,

@@ -37,8 +37,8 @@ func (r *Game) Update() error {
 	r.lastUpdateCalled = time.Now()
 
 	r.player.Update(delta, r)
-	r.camera.Update(delta)
 	r.level.Update(delta, r)
+	r.camera.Update(delta, r)
 
 	if inpututil.IsKeyJustPressed(ebiten.KeyF) {
 		ebiten.SetFullscreen(!ebiten.IsFullscreen())
