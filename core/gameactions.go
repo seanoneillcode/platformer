@@ -19,3 +19,7 @@ func (r *Game) PlayerDeath() {
 	r.player.y = r.level.spawn.y
 	fmt.Println("player death")
 }
+
+func (r *Game) MoveToNextLevel(level string) {
+	r.LoadLevel(level)
+}

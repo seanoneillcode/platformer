@@ -34,6 +34,12 @@
                  "height":32,
                  "id":3,
                  "name":"exit",
+                 "properties":[
+                        {
+                         "name":"next-level",
+                         "type":"string",
+                         "value":"enemy-level"
+                        }],
                  "rotation":0,
                  "type":"",
                  "visible":true,

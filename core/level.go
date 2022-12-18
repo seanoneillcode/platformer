@@ -6,6 +6,7 @@ import (
 )
 
 const spawnObject = "spawn"
+const exitObject = "exit"
 
 type Level struct {
 	name             string
@@ -13,6 +14,7 @@ type Level struct {
 	background       *ebiten.Image
 	backgroundOffset float64
 	spawn            *Spawn
+	exit             *Exit
 }
 
 func NewLevel(name string) *Level {
@@ -29,6 +31,17 @@ func NewLevel(name string) *Level {
 				y: float64(object.Y),
 			}
 		}
+		if object.Name == exitObject {
+			l.exit = &Exit{
+				x: float64(object.X),
+				y: float64(object.Y),
+			}
+			for _, prop := range object.Properties {
+				if prop.Name == "next-level" && prop.Value != nil {
+					l.exit.nextLevel = (prop.Value).(string)
+				}
+			}
+		}
 	}
 	// validate level
 	if l.spawn == nil {
@@ -39,6 +52,11 @@ func NewLevel(name string) *Level {
 
 func (r *Level) Update(delta float64, game *Game) {
 	r.backgroundOffset = (game.player.y / float64(r.tiledGrid.Layers[0].Height*common.TileSize)) * (60)
+	if r.exit != nil {
+		if common.Overlap(game.player.x+8, game.player.y+4, game.player.sizex, game.player.sizey, r.exit.x, r.exit.y, common.TileSize, common.TileSize*2) {
+			game.MoveToNextLevel(r.exit.nextLevel)
+		}
+	}
 }
 
 func (r *Level) Draw(camera common.Camera) {
@@ -50,4 +68,15 @@ func (r *Level) Draw(camera common.Camera) {
 	camera.DrawImage(r.background, op)
 
 	r.tiledGrid.Draw(camera)
+}
+
+type Spawn struct {
+	x float64
+	y float64
+}
+
+type Exit struct {
+	x         float64
+	y         float64
+	nextLevel string
 }
