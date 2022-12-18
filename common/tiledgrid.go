@@ -15,6 +15,7 @@ import (
 const (
 	resourceDirectory = "res/"
 	groundLayer       = "ground"
+	objectsLayer      = "objects"
 	backgroundLayer   = "background"
 )
 
@@ -24,6 +25,7 @@ type TiledGrid struct {
 	TileSet           *TileSet
 	TileMap           map[int]*TileData
 	GroundLayer       *Layer
+	ObjectLayer       *Layer
 }
 
 type Layer struct {
@@ -86,7 +88,9 @@ func NewTileGrid(fileName string) *TiledGrid {
 	for _, l := range tiledGrid.Layers {
 		if l.Name == groundLayer {
 			tiledGrid.GroundLayer = l
-			break
+		}
+		if l.Name == objectsLayer {
+			tiledGrid.ObjectLayer = l
 		}
 	}
 
@@ -105,6 +109,9 @@ func NewTileGrid(fileName string) *TiledGrid {
 			}
 			if prop.Name == "ladder" && prop.Value != nil {
 				td.Ladder = (prop.Value).(bool)
+			}
+			if prop.Name == "damage" && prop.Value != nil {
+				td.Damage = (prop.Value).(bool)
 			}
 		}
 		tileId := tile.Id
@@ -181,7 +188,11 @@ type ObjectProperty struct {
 func (tg *TiledGrid) GetObjectData() []*ObjectData {
 	var ods []*ObjectData
 
-	for _, obj := range tg.GroundLayer.Objects {
+	if tg.ObjectLayer == nil {
+		return []*ObjectData{}
+	}
+
+	for _, obj := range tg.ObjectLayer.Objects {
 		od := &ObjectData{
 			Name:       obj.Name,
 			ObjectType: obj.Type,
@@ -206,6 +217,7 @@ type TileData struct {
 	Block    bool
 	Platform bool
 	Ladder   bool
+	Damage   bool
 }
 
 var EmptyTile = &TileData{}

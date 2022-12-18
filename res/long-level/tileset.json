@@ -220,6 +220,15 @@
                  "type":"bool",
                  "value":true
                 }]
+        }, 
+        {
+         "id":240,
+         "properties":[
+                {
+                 "name":"damage",
+                 "type":"bool",
+                 "value":true
+                }]
         }],
  "tilewidth":16,
  "type":"tileset",

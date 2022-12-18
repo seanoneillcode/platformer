@@ -3,6 +3,7 @@ package core
 import (
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/hajimehoshi/ebiten/v2/inpututil"
+	"math"
 	"platformer/common"
 )
 
@@ -10,6 +11,7 @@ const playingState = "playing"
 const dyingState = "dying"
 
 const standardJumpHeight = 16 * 3.1
+const forcedJumpHeight = 16 * 2
 const standardJumpTime = 0.4
 const standardFallTime = 0.4
 const minimumJumpHeight = 16
@@ -20,6 +22,8 @@ const maxRunVelocity = 100
 const ladderVelocity = 70
 const tryJumpMarginTime = 0.1
 const ladderGrabAllowance = 8.0
+const takeDamageTime = 0.3
+const postDamageTime = 0.6
 
 type Player struct {
 	x                  float64
@@ -52,6 +56,8 @@ type Player struct {
 	animations         map[string]*Animation
 	tryJumpTimer       float64
 	lockedToLadder     bool
+	takeDamageTimer    float64
+	postDamageTimer    float64
 }
 
 func NewPlayer(game *Game) *Player {
@@ -98,6 +104,13 @@ func NewPlayer(game *Game) *Player {
 			},
 			"climb": {
 				image:           game.images["player-climb"],
+				numFrames:       2,
+				size:            32,
+				frameTimeAmount: 0.2,
+				isLoop:          true,
+			},
+			"hurt": {
+				image:           game.images["player-hurt"],
 				numFrames:       1,
 				size:            32,
 				frameTimeAmount: 1,
@@ -112,7 +125,7 @@ func NewPlayer(game *Game) *Player {
 }
 
 func (r *Player) Update(delta float64, game *Game) {
-	r.animations[r.currentAnimation].Update(delta)
+
 	switch r.state {
 	case playingState:
 		var tryJump bool
@@ -121,37 +134,51 @@ func (r *Player) Update(delta float64, game *Game) {
 		var tryMovey = 0.0
 		r.targetVelocityX = 0
 		r.currentAnimation = "idle"
+		shouldUpdateAnimation := false
 
-		if ebiten.IsKeyPressed(ebiten.KeyArrowLeft) || ebiten.IsKeyPressed(ebiten.KeyA) {
-			r.targetVelocityX = -maxRunVelocity
-			r.isFlip = true
-			r.currentAnimation = "run"
-			if r.lockedToLadder {
-				r.targetVelocityX = -maxRunVelocity / 2.0
+		if r.takeDamageTimer <= 0 {
+			if ebiten.IsKeyPressed(ebiten.KeyArrowLeft) || ebiten.IsKeyPressed(ebiten.KeyA) {
+				r.targetVelocityX = -maxRunVelocity
+				r.isFlip = true
+				r.currentAnimation = "run"
+				if r.lockedToLadder {
+					r.targetVelocityX = -maxRunVelocity / 2.0
+				}
+				shouldUpdateAnimation = true
 			}
-		}
-		if ebiten.IsKeyPressed(ebiten.KeyArrowRight) || ebiten.IsKeyPressed(ebiten.KeyD) {
-			r.targetVelocityX = maxRunVelocity
-			r.isFlip = false
-			r.currentAnimation = "run"
-			if r.lockedToLadder {
-				r.targetVelocityX = maxRunVelocity / 2.0
+			if ebiten.IsKeyPressed(ebiten.KeyArrowRight) || ebiten.IsKeyPressed(ebiten.KeyD) {
+				r.targetVelocityX = maxRunVelocity
+				r.isFlip = false
+				r.currentAnimation = "run"
+				if r.lockedToLadder {
+					r.targetVelocityX = maxRunVelocity / 2.0
+				}
+				shouldUpdateAnimation = true
 			}
-		}
-		if ebiten.IsKeyPressed(ebiten.KeyArrowDown) || ebiten.IsKeyPressed(ebiten.KeyS) {
-			tryFall = true
-			tryMovey = 1
-		}
-		if ebiten.IsKeyPressed(ebiten.KeyArrowUp) || ebiten.IsKeyPressed(ebiten.KeyW) {
-			tryMovey = -1
-		}
-		if ebiten.IsKeyPressed(ebiten.KeySpace) {
-			pressJump = true
-		}
-		r.tryJumpTimer = r.tryJumpTimer - delta
-		if inpututil.IsKeyJustPressed(ebiten.KeySpace) {
-			tryJump = true
-			r.tryJumpTimer = tryJumpMarginTime
+			if ebiten.IsKeyPressed(ebiten.KeyArrowDown) || ebiten.IsKeyPressed(ebiten.KeyS) {
+				tryFall = true
+				tryMovey = 1
+				shouldUpdateAnimation = true
+			}
+			if ebiten.IsKeyPressed(ebiten.KeyArrowUp) || ebiten.IsKeyPressed(ebiten.KeyW) {
+				tryMovey = -1
+				shouldUpdateAnimation = true
+			}
+			if ebiten.IsKeyPressed(ebiten.KeySpace) {
+				pressJump = true
+				shouldUpdateAnimation = true
+			}
+			r.tryJumpTimer = r.tryJumpTimer - delta
+			if inpututil.IsKeyJustPressed(ebiten.KeySpace) {
+				tryJump = true
+				r.tryJumpTimer = tryJumpMarginTime
+				shouldUpdateAnimation = true
+			}
+		} else {
+			r.targetVelocityX = maxRunVelocity / 2.0
+			if r.isFlip {
+				r.targetVelocityX = r.targetVelocityX * -1
+			}
 		}
 
 		time := standardJumpTime
@@ -174,6 +201,7 @@ func (r *Player) Update(delta float64, game *Game) {
 		r.velocityY = r.velocityY + (gravity * delta)
 
 		var hitWall = false
+		var hitDamage = false
 		tx, ty := int((newx+partial)/common.TileSize), int(oldy/common.TileSize)
 		td := game.level.tiledGrid.GetTileData(tx, ty)
 		if td.Block {
@@ -194,7 +222,6 @@ func (r *Player) Update(delta float64, game *Game) {
 			newx = float64(tx*common.TileSize) + common.TileSize + fudge - partial
 			hitWall = true
 		}
-
 		tx, ty = int(((newx+partial)+(r.sizex-partial))/common.TileSize), int((oldy+r.sizey)/common.TileSize)
 		td = game.level.tiledGrid.GetTileData(tx, ty)
 		if td.Block {
@@ -302,6 +329,11 @@ func (r *Player) Update(delta float64, game *Game) {
 		if !touchingLadder {
 			r.lockedToLadder = false
 		}
+		tx, ty = int((oldx+(r.sizex/2.0))/common.TileSize), int((oldy+r.sizey-8)/common.TileSize)
+		td = game.level.tiledGrid.GetTileData(tx, ty)
+		if td.Damage {
+			hitDamage = true
+		}
 
 		r.x = newx
 		r.y = newy
@@ -350,9 +382,6 @@ func (r *Player) Update(delta float64, game *Game) {
 			r.targetVelocityX = 0
 			r.velocityX = 0
 		}
-		if r.lockedToLadder {
-			//r.targetVelocityX = 0
-		}
 
 		if r.velocityX < r.targetVelocityX {
 			r.velocityX = r.velocityX + runAcc
@@ -366,12 +395,37 @@ func (r *Player) Update(delta float64, game *Game) {
 				r.velocityX = r.targetVelocityX
 			}
 		}
+		if hitDamage {
+			game.player.TakeDamage()
+		}
+		if r.takeDamageTimer > 0 {
+			r.takeDamageTimer -= delta
+			if r.takeDamageTimer < 0 {
+				r.postDamageTimer = postDamageTime
+			}
+			r.currentAnimation = "hurt"
+		}
+		if r.postDamageTimer > 0 {
+			r.postDamageTimer -= delta
+			if r.postDamageTimer < 0 {
+				// normal
+			}
+		}
+
+		if shouldUpdateAnimation {
+			r.animations[r.currentAnimation].Update(delta)
+		}
 	}
 }
 
 func (r *Player) Draw(camera common.Camera) {
 	if r.state == dyingState {
 		return
+	}
+	if r.postDamageTimer > 0 || r.takeDamageTimer > 0 {
+		if math.Mod(r.postDamageTimer, 0.16) > 0.08 {
+			return
+		}
 	}
 	op := &ebiten.DrawImageOptions{}
 	if r.isFlip {
@@ -394,4 +448,22 @@ func (r *Player) GetHit(game *Game) {
 
 func (r *Player) GetPos() (float64, float64) {
 	return r.x, r.y
+}
+
+func (r *Player) TakeDamage() {
+	// already busy taking damage
+	if r.takeDamageTimer > 0 {
+		return
+	}
+	// a bit of iframes after damage
+	if r.postDamageTimer > 0 {
+		return
+	}
+	r.takeDamageTimer = takeDamageTime
+	r.ForceJump()
+}
+
+func (r *Player) ForceJump() {
+	r.alreadyAbortedJump = true
+	r.velocityY = (2 * forcedJumpHeight) / (standardJumpTime)
 }

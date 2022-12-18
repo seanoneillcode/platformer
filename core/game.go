@@ -22,6 +22,7 @@ func NewGame() *Game {
 			"player-idle":  common.LoadImage("player-idle.png"),
 			"player-jump":  common.LoadImage("player-jump.png"),
 			"player-fall":  common.LoadImage("player-fall.png"),
+			"player-hurt":  common.LoadImage("player-hurt.png"),
 			"player-climb": common.LoadImage("player-climb.png"),
 		},
 		lastUpdateCalled: time.Now(),
