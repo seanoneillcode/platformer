@@ -222,6 +222,42 @@
                 }]
         }, 
         {
+         "id":200,
+         "properties":[
+                {
+                 "name":"block",
+                 "type":"bool",
+                 "value":false
+                }]
+        }, 
+        {
+         "id":201,
+         "properties":[
+                {
+                 "name":"block",
+                 "type":"bool",
+                 "value":true
+                }]
+        }, 
+        {
+         "id":220,
+         "properties":[
+                {
+                 "name":"block",
+                 "type":"bool",
+                 "value":false
+                }]
+        }, 
+        {
+         "id":221,
+         "properties":[
+                {
+                 "name":"block",
+                 "type":"bool",
+                 "value":true
+                }]
+        }, 
+        {
          "id":240,
          "properties":[
                 {

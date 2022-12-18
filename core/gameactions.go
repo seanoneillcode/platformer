@@ -9,5 +9,13 @@ func (r *Game) LoadLevel(name string) {
 	r.level = NewLevel(name)
 	r.player.x = r.level.spawn.x
 	r.player.y = r.level.spawn.y
-	fmt.Println("spawn ", r.player.x, " ", r.player.y)
+	fmt.Println("load level ", name)
+}
+
+func (r *Game) PlayerDeath() {
+	r.player = NewPlayer(r)
+	r.camera.Target(r.player)
+	r.player.x = r.level.spawn.x
+	r.player.y = r.level.spawn.y
+	fmt.Println("player death")
 }

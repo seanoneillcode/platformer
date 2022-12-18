@@ -24,6 +24,7 @@ const tryJumpMarginTime = 0.1
 const ladderGrabAllowance = 8.0
 const takeDamageTime = 0.3
 const postDamageTime = 0.6
+const playerDeathTime = 2.0
 
 type Player struct {
 	x                  float64
@@ -39,7 +40,6 @@ type Player struct {
 	timer              float64
 	shootTimer         float64
 	image              *ebiten.Image
-	lives              int
 	animTimer          float64
 	targetFrame        int
 	moveYSpeed         float64
@@ -58,11 +58,14 @@ type Player struct {
 	lockedToLadder     bool
 	takeDamageTimer    float64
 	postDamageTimer    float64
+	health             int
+	deathTimer         float64
 }
 
 func NewPlayer(game *Game) *Player {
 	p := &Player{
 		state:            playingState,
+		health:           2,
 		x:                19 * common.TileSize,
 		y:                12 * common.TileSize,
 		sizex:            16, // physical size
@@ -71,7 +74,6 @@ func NewPlayer(game *Game) *Player {
 		drawOffsetY:      16, // just for drawing
 		drawSizex:        32, // just for drawing
 		drawSizey:        32,
-		lives:            2,
 		currentAnimation: "idle",
 		animations: map[string]*Animation{
 			"run": {
@@ -94,6 +96,13 @@ func NewPlayer(game *Game) *Player {
 				size:            32,
 				frameTimeAmount: 1,
 				isLoop:          true,
+			},
+			"death": {
+				image:           game.images["player-death"],
+				numFrames:       3,
+				size:            32,
+				frameTimeAmount: 0.4,
+				isLoop:          false,
 			},
 			"fall": {
 				image:           game.images["player-fall"],
@@ -127,6 +136,13 @@ func NewPlayer(game *Game) *Player {
 func (r *Player) Update(delta float64, game *Game) {
 
 	switch r.state {
+	case dyingState:
+		r.deathTimer -= delta
+		if r.deathTimer < 0 {
+			game.PlayerDeath()
+		}
+		r.currentAnimation = "death"
+		r.animations[r.currentAnimation].Update(delta)
 	case playingState:
 		var tryJump bool
 		var pressJump bool
@@ -396,7 +412,7 @@ func (r *Player) Update(delta float64, game *Game) {
 			}
 		}
 		if hitDamage {
-			game.player.TakeDamage()
+			game.player.TakeDamage(game)
 		}
 		if r.takeDamageTimer > 0 {
 			r.takeDamageTimer -= delta
@@ -419,9 +435,6 @@ func (r *Player) Update(delta float64, game *Game) {
 }
 
 func (r *Player) Draw(camera common.Camera) {
-	if r.state == dyingState {
-		return
-	}
 	if r.postDamageTimer > 0 || r.takeDamageTimer > 0 {
 		if math.Mod(r.postDamageTimer, 0.16) > 0.08 {
 			return
@@ -439,18 +452,11 @@ func (r *Player) Draw(camera common.Camera) {
 	camera.DrawImage(r.animations[r.currentAnimation].GetCurrentFrame(), op)
 }
 
-func (r *Player) GetHit(game *Game) {
-	r.lives = r.lives - 1
-	if r.lives < 0 {
-		r.state = dyingState
-	}
-}
-
 func (r *Player) GetPos() (float64, float64) {
 	return r.x, r.y
 }
 
-func (r *Player) TakeDamage() {
+func (r *Player) TakeDamage(game *Game) {
 	// already busy taking damage
 	if r.takeDamageTimer > 0 {
 		return
@@ -459,8 +465,14 @@ func (r *Player) TakeDamage() {
 	if r.postDamageTimer > 0 {
 		return
 	}
-	r.takeDamageTimer = takeDamageTime
-	r.ForceJump()
+	r.health -= 1
+	if r.health > 0 {
+		r.takeDamageTimer = takeDamageTime
+		r.ForceJump()
+	} else {
+		r.deathTimer = playerDeathTime
+		r.state = dyingState
+	}
 }
 
 func (r *Player) ForceJump() {
