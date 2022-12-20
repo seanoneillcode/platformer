@@ -60,12 +60,14 @@ type Player struct {
 	postDamageTimer    float64
 	health             int
 	deathTimer         float64
+	maxHealth          int
 }
 
 func NewPlayer(game *Game) *Player {
 	p := &Player{
 		state:            playingState,
 		health:           2,
+		maxHealth:        3,
 		x:                19 * common.TileSize,
 		y:                12 * common.TileSize,
 		sizex:            16, // physical size
@@ -478,4 +480,11 @@ func (r *Player) TakeDamage(game *Game) {
 func (r *Player) ForceJump() {
 	r.alreadyAbortedJump = true
 	r.velocityY = (2 * forcedJumpHeight) / (standardJumpTime)
+}
+
+func (r *Player) AddHealth(amount int) {
+	r.health += amount
+	if r.health > r.maxHealth {
+		r.health = r.maxHealth
+	}
 }

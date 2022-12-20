@@ -46,6 +46,56 @@
                  "width":16,
                  "x":2288,
                  "y":112
+                }, 
+                {
+                 "height":16,
+                 "id":4,
+                 "name":"book",
+                 "rotation":0,
+                 "type":"",
+                 "visible":true,
+                 "width":16,
+                 "x":368,
+                 "y":272
+                }, 
+                {
+                 "height":16,
+                 "id":5,
+                 "name":"book",
+                 "properties":[
+                        {
+                         "name":"title",
+                         "type":"string",
+                         "value":"the magic of game dev"
+                        }],
+                 "rotation":0,
+                 "type":"",
+                 "visible":true,
+                 "width":16,
+                 "x":448,
+                 "y":304
+                }, 
+                {
+                 "height":16,
+                 "id":6,
+                 "name":"health",
+                 "rotation":0,
+                 "type":"",
+                 "visible":true,
+                 "width":16,
+                 "x":528,
+                 "y":272
+                }, 
+                {
+                 "height":16,
+                 "id":7,
+                 "name":"book",
+                 "rotation":0,
+                 "type":"",
+                 "visible":true,
+                 "width":16,
+                 "x":288,
+                 "y":288
                 }],
          "opacity":1,
          "type":"objectgroup",
@@ -66,7 +116,7 @@
          "y":0
         }],
  "nextlayerid":5,
- "nextobjectid":4,
+ "nextobjectid":8,
  "orientation":"orthogonal",
  "renderorder":"right-down",
  "tiledversion":"1.7.2",

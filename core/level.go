@@ -15,15 +15,17 @@ type Level struct {
 	backgroundOffset float64
 	spawn            *Spawn
 	exit             *Exit
+	pickups          []*Pickup
 }
 
-func NewLevel(name string) *Level {
+func NewLevel(name string, game *Game) *Level {
 	l := &Level{
 		background:       common.LoadImage(name + "/background.png"),
 		backgroundOffset: 60,
 	}
 	l.tiledGrid = common.NewTileGrid(name)
 	objects := l.tiledGrid.GetObjectData()
+	l.pickups = []*Pickup{}
 	for _, object := range objects {
 		if object.Name == spawnObject {
 			l.spawn = &Spawn{
@@ -42,6 +44,40 @@ func NewLevel(name string) *Level {
 				}
 			}
 		}
+		if object.Name == healthPickup {
+			newPickup := &Pickup{
+				x:     float64(object.X),
+				y:     float64(object.Y),
+				image: game.images["health-pickup"],
+			}
+			effect := &HealthEffect{
+				amount: 1,
+			}
+			for _, prop := range object.Properties {
+				if prop.Name == "amount" && prop.Value != nil {
+					effect.amount = (prop.Value).(int)
+				}
+			}
+			newPickup.effect = effect
+			l.pickups = append(l.pickups, newPickup)
+		}
+		if object.Name == bookPickup {
+			newPickup := &Pickup{
+				x:     float64(object.X),
+				y:     float64(object.Y),
+				image: game.images["book-pickup"],
+			}
+			effect := &BookEffect{
+				title: "untitled",
+			}
+			for _, prop := range object.Properties {
+				if prop.Name == "title" && prop.Value != nil {
+					effect.title = (prop.Value).(string)
+				}
+			}
+			newPickup.effect = effect
+			l.pickups = append(l.pickups, newPickup)
+		}
 	}
 	// validate level
 	if l.spawn == nil {
@@ -57,6 +93,9 @@ func (r *Level) Update(delta float64, game *Game) {
 			game.MoveToNextLevel(r.exit.nextLevel)
 		}
 	}
+	for _, pickup := range r.pickups {
+		pickup.Update(delta, game)
+	}
 }
 
 func (r *Level) Draw(camera common.Camera) {
@@ -68,6 +107,10 @@ func (r *Level) Draw(camera common.Camera) {
 	camera.DrawImage(r.background, op)
 
 	r.tiledGrid.Draw(camera)
+
+	for _, pickup := range r.pickups {
+		pickup.Draw(camera)
+	}
 }
 
 type Spawn struct {
@@ -79,4 +122,14 @@ type Exit struct {
 	x         float64
 	y         float64
 	nextLevel string
+}
+
+func (r *Level) RemovePickup(pickup *Pickup) {
+	newListOfPickups := []*Pickup{}
+	for _, p := range r.pickups {
+		if p != pickup {
+			newListOfPickups = append(newListOfPickups, p)
+		}
+	}
+	r.pickups = newListOfPickups
 }
