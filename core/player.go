@@ -13,8 +13,8 @@ const dyingState = "dying"
 
 const standardJumpHeight = 16 * 3.1
 const forcedJumpHeight = 16 * 2
-const standardJumpTime = 0.46
-const standardFallTime = 0.38
+const standardJumpTime = 0.44
+const standardFallTime = 0.4
 const minimumJumpHeight = 16
 const coyoteTimeAmount = 0.16
 const fudge = 0.001

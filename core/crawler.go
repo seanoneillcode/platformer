@@ -30,9 +30,9 @@ func NewCrawler(x float64, y float64, game *Game) *Crawler {
 		animations: map[string]*Animation{
 			"run": {
 				image:           game.images["crawler-run"],
-				numFrames:       2,
+				numFrames:       5,
 				size:            24,
-				frameTimeAmount: 0.4,
+				frameTimeAmount: 0.1,
 				isLoop:          true,
 			},
 			"idle": {
@@ -59,7 +59,7 @@ func NewCrawler(x float64, y float64, game *Game) *Crawler {
 		},
 		health:     1,
 		directionX: 1,
-		moveSpeed:  40,
+		moveSpeed:  16,
 	}
 }
 
@@ -82,9 +82,6 @@ func (r *Crawler) Update(delta float64, game *Game) {
 }
 
 func (r *Crawler) think(game *Game) {
-	// check current tile
-	//halfWidth := r.sizeX / 2.0
-
 	if r.directionX > 0 {
 		tx, ty := int(r.x/common.TileSize)+1, int(r.y/common.TileSize)
 		game.debug.DrawBox(color.RGBA{R: 244, G: 12, B: 9, A: 244}, float64(tx*common.TileSize), float64(ty*common.TileSize), common.TileSize, common.TileSize)
