@@ -6,11 +6,6 @@ import (
 	"platformer/common"
 )
 
-const (
-	healthPickup = "health"
-	bookPickup   = "book"
-)
-
 type Pickup struct {
 	x      float64
 	y      float64

@@ -13,6 +13,7 @@ type Game struct {
 	images           map[string]*ebiten.Image
 	camera           *Camera
 	level            *Level
+	debug            *DebugDrawer
 }
 
 func NewGame() *Game {
@@ -27,8 +28,13 @@ func NewGame() *Game {
 			"player-climb":  common.LoadImage("player-climb.png"),
 			"book-pickup":   common.LoadImage("book.png"),
 			"health-pickup": common.LoadImage("health.png"),
+			"crawler-run":   common.LoadImage("crawler-run.png"),
+			"crawler-idle":  common.LoadImage("crawler-idle.png"),
+			"crawler-hurt":  common.LoadImage("crawler-hurt.png"),
+			"crawler-die":   common.LoadImage("crawler-die.png"),
 		},
 		lastUpdateCalled: time.Now(),
+		debug:            NewDebug(),
 	}
 	r.LoadLevel("long-level")
 	return r
@@ -38,6 +44,7 @@ func (r *Game) Update() error {
 	delta := float64(time.Now().Sub(r.lastUpdateCalled).Milliseconds()) / 1000
 	r.lastUpdateCalled = time.Now()
 
+	r.debug.Update(delta, r)
 	r.player.Update(delta, r)
 	r.level.Update(delta, r)
 	r.camera.Update(delta, r)
@@ -55,6 +62,7 @@ func (r *Game) Update() error {
 func (r *Game) Draw(screen *ebiten.Image) {
 	r.level.Draw(r.camera)
 	r.player.Draw(r.camera)
+	r.debug.Draw(r.camera)
 	r.camera.DrawBuffer(screen)
 }
 

@@ -5,8 +5,13 @@ import (
 	"platformer/common"
 )
 
-const spawnObject = "spawn"
-const exitObject = "exit"
+const (
+	healthPickup = "health"
+	bookPickup   = "book"
+	spawnObject  = "spawn"
+	exitObject   = "exit"
+	crawlerEnemy = "crawler"
+)
 
 type Level struct {
 	name             string
@@ -16,12 +21,14 @@ type Level struct {
 	spawn            *Spawn
 	exit             *Exit
 	pickups          []*Pickup
+	enemies          []Enemy
 }
 
 func NewLevel(name string, game *Game) *Level {
 	l := &Level{
 		background:       common.LoadImage(name + "/background.png"),
 		backgroundOffset: 60,
+		enemies:          []Enemy{},
 	}
 	l.tiledGrid = common.NewTileGrid(name)
 	objects := l.tiledGrid.GetObjectData()
@@ -43,6 +50,10 @@ func NewLevel(name string, game *Game) *Level {
 					l.exit.nextLevel = (prop.Value).(string)
 				}
 			}
+		}
+		if object.Name == crawlerEnemy {
+			newEnemy := NewCrawler(float64(object.X), float64(object.Y), game)
+			l.enemies = append(l.enemies, newEnemy)
 		}
 		if object.Name == healthPickup {
 			newPickup := &Pickup{
@@ -87,7 +98,7 @@ func NewLevel(name string, game *Game) *Level {
 }
 
 func (r *Level) Update(delta float64, game *Game) {
-	r.backgroundOffset = (game.player.y / float64(r.tiledGrid.Layers[0].Height*common.TileSize)) * (60)
+	r.backgroundOffset = (game.camera.y / float64(r.tiledGrid.Layers[0].Height*common.TileSize)) * (60)
 	if r.exit != nil {
 		if common.Overlap(game.player.x+8, game.player.y+4, game.player.sizex, game.player.sizey, r.exit.x, r.exit.y, common.TileSize, common.TileSize*2) {
 			game.MoveToNextLevel(r.exit.nextLevel)
@@ -95,6 +106,10 @@ func (r *Level) Update(delta float64, game *Game) {
 	}
 	for _, pickup := range r.pickups {
 		pickup.Update(delta, game)
+	}
+
+	for _, enemy := range r.enemies {
+		enemy.Update(delta, game)
 	}
 }
 
@@ -110,6 +125,10 @@ func (r *Level) Draw(camera common.Camera) {
 
 	for _, pickup := range r.pickups {
 		pickup.Draw(camera)
+	}
+
+	for _, enemy := range r.enemies {
+		enemy.Draw(camera)
 	}
 }
 
@@ -132,4 +151,9 @@ func (r *Level) RemovePickup(pickup *Pickup) {
 		}
 	}
 	r.pickups = newListOfPickups
+}
+
+type Enemy interface {
+	Update(delta float64, game *Game)
+	Draw(camera common.Camera)
 }

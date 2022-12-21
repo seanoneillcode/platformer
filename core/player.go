@@ -3,6 +3,7 @@ package core
 import (
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/hajimehoshi/ebiten/v2/inpututil"
+	"image/color"
 	"math"
 	"platformer/common"
 )
@@ -66,7 +67,7 @@ type Player struct {
 func NewPlayer(game *Game) *Player {
 	p := &Player{
 		state:            playingState,
-		health:           2,
+		health:           3,
 		maxHealth:        3,
 		x:                19 * common.TileSize,
 		y:                12 * common.TileSize,
@@ -434,6 +435,8 @@ func (r *Player) Update(delta float64, game *Game) {
 			r.animations[r.currentAnimation].Update(delta)
 		}
 	}
+
+	game.debug.DrawBox(color.Black, r.x, r.y, common.TileSize, common.TileSize)
 }
 
 func (r *Player) Draw(camera common.Camera) {
