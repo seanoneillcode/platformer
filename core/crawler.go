@@ -110,7 +110,7 @@ func (r *Crawler) think(game *Game) {
 		game.debug.DrawBox(color.RGBA{R: 244, G: 12, B: 9, A: 244}, float64(tx*common.TileSize), float64(ty*common.TileSize), common.TileSize, common.TileSize)
 
 		td := game.level.tiledGrid.GetTileData(tx, ty)
-		if td.Block || td.Damage {
+		if td.Block || td.Damage || td.Platform {
 			r.directionX = r.directionX * -1
 			return
 		}
@@ -119,7 +119,7 @@ func (r *Crawler) think(game *Game) {
 		tx, ty = int((r.x)/common.TileSize), int((r.y/common.TileSize)+1)
 		td = game.level.tiledGrid.GetTileData(tx, ty)
 		game.debug.DrawBox(color.RGBA{R: 120, G: 12, B: 44, A: 244}, float64(tx*common.TileSize), float64(ty*common.TileSize), common.TileSize, common.TileSize)
-		if td.Block {
+		if td.Block || td.Platform {
 			r.targetX = float64(tx*common.TileSize) + float64(r.directionX*common.TileSize)
 			return
 		}
