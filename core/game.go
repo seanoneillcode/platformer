@@ -36,7 +36,7 @@ func NewGame() *Game {
 		lastUpdateCalled: time.Now(),
 		debug:            NewDebug(),
 	}
-	r.LoadLevel("long-level")
+	r.LoadLevel("enemy-level")
 	return r
 }
 
