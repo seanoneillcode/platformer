@@ -14,6 +14,7 @@ type Game struct {
 	camera           *Camera
 	level            *Level
 	debug            *DebugDrawer
+	spellObjects     []*SpellObject
 }
 
 func NewGame() *Game {
@@ -26,12 +27,14 @@ func NewGame() *Game {
 			"player-hurt":   common.LoadImage("player-hurt.png"),
 			"player-death":  common.LoadImage("player-death.png"),
 			"player-climb":  common.LoadImage("player-climb.png"),
+			"player-crouch": common.LoadImage("player-crouch.png"),
 			"book-pickup":   common.LoadImage("book.png"),
 			"health-pickup": common.LoadImage("health.png"),
 			"crawler-run":   common.LoadImage("crawler-run.png"),
 			"crawler-idle":  common.LoadImage("crawler-idle.png"),
 			"crawler-hurt":  common.LoadImage("crawler-hurt.png"),
 			"crawler-die":   common.LoadImage("crawler-die.png"),
+			"spell-bullet":  common.LoadImage("spell-bullet.png"),
 		},
 		lastUpdateCalled: time.Now(),
 		debug:            NewDebug(),
@@ -48,6 +51,9 @@ func (r *Game) Update() error {
 	r.player.Update(delta, r)
 	r.level.Update(delta, r)
 	r.camera.Update(delta, r)
+	for _, s := range r.spellObjects {
+		s.Update(delta, r)
+	}
 
 	if inpututil.IsKeyJustPressed(ebiten.KeyF) {
 		ebiten.SetFullscreen(!ebiten.IsFullscreen())
@@ -62,10 +68,27 @@ func (r *Game) Update() error {
 func (r *Game) Draw(screen *ebiten.Image) {
 	r.level.Draw(r.camera)
 	r.player.Draw(r.camera)
+	for _, s := range r.spellObjects {
+		s.Draw(r.camera)
+	}
 	r.debug.Draw(r.camera)
 	r.camera.DrawBuffer(screen)
 }
 
 func (r *Game) Layout(outsideWidth, outsideHeight int) (int, int) {
 	return common.ScreenWidth * common.Scale, common.ScreenHeight * common.Scale
+}
+
+func (r *Game) RemoveSpellObject(spellObject *SpellObject) {
+	newSpellObjs := []*SpellObject{}
+	for _, so := range r.spellObjects {
+		if so != spellObject {
+			newSpellObjs = append(newSpellObjs, so)
+		}
+	}
+	r.spellObjects = newSpellObjs
+}
+
+func (r *Game) AddSpellObject(spellObject *SpellObject) {
+	r.spellObjects = append(r.spellObjects, spellObject)
 }

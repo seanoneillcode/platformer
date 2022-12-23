@@ -7,6 +7,8 @@ import (
 	"platformer/common"
 )
 
+const hurtAmountTime = 0.4
+
 type Crawler struct {
 	x                float64
 	y                float64
@@ -19,6 +21,7 @@ type Crawler struct {
 	targetX    float64
 	targetY    float64
 	moveSpeed  float64
+	hurtTimer  float64
 }
 
 func NewCrawler(x float64, y float64, game *Game) *Crawler {
@@ -46,18 +49,18 @@ func NewCrawler(x float64, y float64, game *Game) *Crawler {
 				image:           game.images["crawler-hurt"],
 				numFrames:       2,
 				size:            24,
-				frameTimeAmount: 0.4,
-				isLoop:          false,
+				frameTimeAmount: 0.1,
+				isLoop:          true,
 			},
-			"death": {
-				image:           game.images["crawler-death"],
-				numFrames:       2,
-				size:            24,
-				frameTimeAmount: 0.4,
-				isLoop:          false,
-			},
+			//"death": {
+			//	image:           game.images["crawler-death"],
+			//	numFrames:       2,
+			//	size:            24,
+			//	frameTimeAmount: 0.4,
+			//	isLoop:          false,
+			//},
 		},
-		health:     1,
+		health:     3,
 		directionX: 1,
 		moveSpeed:  16,
 	}
@@ -67,14 +70,23 @@ func (r *Crawler) Update(delta float64, game *Game) {
 	if common.Overlap(game.player.x+4, game.player.y+8, 8, 8, r.x+2, r.y+2, 12, 12) {
 		game.player.TakeDamage(game)
 	}
-	if math.Abs(r.x-r.targetX) < (r.moveSpeed * delta) {
-		r.x = r.targetX
-	}
-	if r.x < r.targetX {
-		r.x = r.x + (r.moveSpeed * delta)
-	}
-	if r.x > r.targetX {
-		r.x = r.x - (r.moveSpeed * delta)
+	r.currentAnimation = "idle"
+	if r.hurtTimer > 0 {
+		r.currentAnimation = "hurt"
+		r.hurtTimer = r.hurtTimer - delta
+	} else {
+		if math.Abs(r.x-r.targetX) < (r.moveSpeed * delta) {
+			r.x = r.targetX
+			r.currentAnimation = "run"
+		}
+		if r.x < r.targetX {
+			r.x = r.x + (r.moveSpeed * delta)
+			r.currentAnimation = "run"
+		}
+		if r.x > r.targetX {
+			r.x = r.x - (r.moveSpeed * delta)
+			r.currentAnimation = "run"
+		}
 	}
 	r.animations[r.currentAnimation].Update(delta)
 	// thinking
@@ -135,4 +147,23 @@ func (r *Crawler) Draw(camera common.Camera) {
 	op.GeoM.Translate(r.x-4, r.y-8)
 	op.GeoM.Scale(common.Scale, common.Scale)
 	camera.DrawImage(r.animations[r.currentAnimation].GetCurrentFrame(), op)
+}
+
+func (r *Crawler) GetHurt(game *Game) {
+	r.health = r.health - 1
+	r.hurtTimer = hurtAmountTime
+	r.animations["hurt"].Play()
+	if r.health == 0 {
+		game.level.RemoveEnemy(r)
+		// play effect
+	}
+}
+
+func (r *Crawler) GetCollisionBox() CollisionBox {
+	return CollisionBox{
+		x: r.x + 2,
+		y: r.y + 2,
+		w: 12,
+		h: 12,
+	}
 }

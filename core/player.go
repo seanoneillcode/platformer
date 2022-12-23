@@ -26,6 +26,7 @@ const ladderGrabAllowance = 8.0
 const takeDamageTime = 0.3
 const postDamageTime = 0.6
 const playerDeathTime = 2.0
+const castSpellCoolDownTime = 0.2
 
 type Player struct {
 	x                  float64
@@ -62,6 +63,8 @@ type Player struct {
 	health             int
 	deathTimer         float64
 	maxHealth          int
+	castSpellTimer     float64
+	isCrouch           bool
 }
 
 func NewPlayer(game *Game) *Player {
@@ -88,6 +91,13 @@ func NewPlayer(game *Game) *Player {
 			},
 			"idle": {
 				image:           game.images["player-idle"],
+				numFrames:       1,
+				size:            32,
+				frameTimeAmount: 1,
+				isLoop:          true,
+			},
+			"crouch": {
+				image:           game.images["player-crouch"],
 				numFrames:       1,
 				size:            32,
 				frameTimeAmount: 1,
@@ -156,7 +166,7 @@ func (r *Player) Update(delta float64, game *Game) {
 		shouldUpdateAnimation := false
 
 		if r.takeDamageTimer <= 0 {
-			if ebiten.IsKeyPressed(ebiten.KeyArrowLeft) || ebiten.IsKeyPressed(ebiten.KeyA) {
+			if ebiten.IsKeyPressed(ebiten.KeyArrowLeft) {
 				r.targetVelocityX = -maxRunVelocity
 				r.isFlip = true
 				r.currentAnimation = "run"
@@ -165,7 +175,7 @@ func (r *Player) Update(delta float64, game *Game) {
 				}
 				shouldUpdateAnimation = true
 			}
-			if ebiten.IsKeyPressed(ebiten.KeyArrowRight) || ebiten.IsKeyPressed(ebiten.KeyD) {
+			if ebiten.IsKeyPressed(ebiten.KeyArrowRight) {
 				r.targetVelocityX = maxRunVelocity
 				r.isFlip = false
 				r.currentAnimation = "run"
@@ -174,12 +184,17 @@ func (r *Player) Update(delta float64, game *Game) {
 				}
 				shouldUpdateAnimation = true
 			}
-			if ebiten.IsKeyPressed(ebiten.KeyArrowDown) || ebiten.IsKeyPressed(ebiten.KeyS) {
+			r.isCrouch = false
+			if ebiten.IsKeyPressed(ebiten.KeyArrowDown) {
 				tryFall = true
 				tryMovey = 1
 				shouldUpdateAnimation = true
+				if r.targetVelocityX == 0 {
+					r.isCrouch = true
+					r.currentAnimation = "crouch"
+				}
 			}
-			if ebiten.IsKeyPressed(ebiten.KeyArrowUp) || ebiten.IsKeyPressed(ebiten.KeyW) {
+			if ebiten.IsKeyPressed(ebiten.KeyArrowUp) {
 				tryMovey = -1
 				shouldUpdateAnimation = true
 			}
@@ -433,6 +448,26 @@ func (r *Player) Update(delta float64, game *Game) {
 
 		if shouldUpdateAnimation {
 			r.animations[r.currentAnimation].Update(delta)
+		}
+	}
+
+	r.castSpellTimer = r.castSpellTimer - delta
+	if inpututil.IsKeyJustPressed(ebiten.KeyD) {
+		if r.castSpellTimer < 0 {
+			r.castSpellTimer = castSpellCoolDownTime
+
+			moveX := spellBulletSpeed
+			posX := r.x + 8
+			if r.isFlip {
+				moveX = moveX * -1
+				posX = r.x - 8
+			}
+			posY := r.y - 10
+			if r.isCrouch {
+				posY = r.y - 2
+			}
+			spellObj := NewSpellObject(game, posX, posY, moveX, 0)
+			game.AddSpellObject(spellObj)
 		}
 	}
 

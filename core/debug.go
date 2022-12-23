@@ -16,7 +16,7 @@ type DebugDrawer struct {
 func NewDebug() *DebugDrawer {
 	return &DebugDrawer{
 		boxes:     []*debugBox{},
-		showDebug: true,
+		showDebug: false,
 		image:     common.LoadImage("debug-pixel.png"),
 	}
 }

@@ -153,7 +153,26 @@ func (r *Level) RemovePickup(pickup *Pickup) {
 	r.pickups = newListOfPickups
 }
 
+func (r *Level) RemoveEnemy(enemy Enemy) {
+	newEnemies := []Enemy{}
+	for _, e := range r.enemies {
+		if e != enemy {
+			newEnemies = append(newEnemies, e)
+		}
+	}
+	r.enemies = newEnemies
+}
+
 type Enemy interface {
 	Update(delta float64, game *Game)
 	Draw(camera common.Camera)
+	GetHurt(game *Game)
+	GetCollisionBox() CollisionBox
+}
+
+type CollisionBox struct {
+	x float64
+	y float64
+	w float64
+	h float64
 }
