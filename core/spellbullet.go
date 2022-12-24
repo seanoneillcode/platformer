@@ -5,7 +5,7 @@ import (
 	"platformer/common"
 )
 
-const spellBulletSpeed = 120.0
+const spellBulletSpeed = 200.0
 
 type SpellObject struct {
 	x         float64
@@ -44,7 +44,7 @@ func (r *SpellObject) Update(delta float64, game *Game) {
 	r.ttl = r.ttl - delta
 	if r.ttl < 0 {
 		game.RemoveSpellObject(r)
-		// add destroy effect
+		game.SpawnEffect(effectSpellHit, r.x, r.y)
 		return
 	}
 	// check for collision with level, enemies, player etc
@@ -52,7 +52,7 @@ func (r *SpellObject) Update(delta float64, game *Game) {
 	td := game.level.tiledGrid.GetTileData(tx, ty)
 	if td.Block {
 		game.RemoveSpellObject(r)
-		// add destroy effect
+		game.SpawnEffect(effectSpellHit, r.x, r.y)
 		return
 	}
 
@@ -61,6 +61,7 @@ func (r *SpellObject) Update(delta float64, game *Game) {
 		if common.Overlap(r.x+6, r.y+6, 4, 4, cb.x, cb.y, cb.w, cb.h) {
 			e.GetHurt(game)
 			game.RemoveSpellObject(r)
+			game.SpawnEffect(effectSpellHit, r.x, r.y)
 			return
 		}
 	}

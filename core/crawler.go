@@ -154,6 +154,7 @@ func (r *Crawler) GetHurt(game *Game) {
 	r.hurtTimer = hurtAmountTime
 	r.animations["hurt"].Play()
 	if r.health == 0 {
+		game.SpawnEffect(effectCrawlerDeath, r.x-8, r.y-8)
 		game.level.RemoveEnemy(r)
 		// play effect
 	}
