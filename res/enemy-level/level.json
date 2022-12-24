@@ -49,7 +49,7 @@
                         {
                          "name":"spell",
                          "type":"string",
-                         "value":"burn"
+                         "value":"spell-bullet"
                         }, 
                         {
                          "name":"title",

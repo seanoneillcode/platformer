@@ -65,6 +65,8 @@ type Player struct {
 	maxHealth          int
 	castSpellTimer     float64
 	isCrouch           bool
+	currentSpell       string
+	spells             map[string]bool
 }
 
 func NewPlayer(game *Game) *Player {
@@ -81,6 +83,7 @@ func NewPlayer(game *Game) *Player {
 		drawSizex:        32, // just for drawing
 		drawSizey:        32,
 		currentAnimation: "idle",
+		spells:           map[string]bool{},
 		animations: map[string]*Animation{
 			"run": {
 				image:           game.images["player-run"],
@@ -454,20 +457,23 @@ func (r *Player) Update(delta float64, game *Game) {
 	r.castSpellTimer = r.castSpellTimer - delta
 	if inpututil.IsKeyJustPressed(ebiten.KeyD) {
 		if r.castSpellTimer < 0 {
-			r.castSpellTimer = castSpellCoolDownTime
+			switch r.currentSpell {
+			case "spell-bullet":
+				r.castSpellTimer = castSpellCoolDownTime
 
-			moveX := spellBulletSpeed
-			posX := r.x + 8
-			if r.isFlip {
-				moveX = moveX * -1
-				posX = r.x - 8
+				moveX := spellBulletSpeed
+				posX := r.x + 8
+				if r.isFlip {
+					moveX = moveX * -1
+					posX = r.x - 8
+				}
+				posY := r.y - 10
+				if r.isCrouch {
+					posY = r.y - 2
+				}
+				spellObj := NewSpellObject(game, posX, posY, moveX, 0)
+				game.AddSpellObject(spellObj)
 			}
-			posY := r.y - 10
-			if r.isCrouch {
-				posY = r.y - 2
-			}
-			spellObj := NewSpellObject(game, posX, posY, moveX, 0)
-			game.AddSpellObject(spellObj)
 		}
 	}
 
@@ -524,5 +530,15 @@ func (r *Player) AddHealth(amount int) {
 	r.health += amount
 	if r.health > r.maxHealth {
 		r.health = r.maxHealth
+	}
+}
+
+func (r *Player) AddSpell(spell string) {
+	_, ok := r.spells[spell]
+	if !ok {
+		r.spells[spell] = true
+	}
+	if len(r.spells) == 1 {
+		r.currentSpell = spell
 	}
 }

@@ -85,6 +85,9 @@ func NewLevel(name string, game *Game) *Level {
 				if prop.Name == "title" && prop.Value != nil {
 					effect.title = (prop.Value).(string)
 				}
+				if prop.Name == "spell" && prop.Value != nil {
+					effect.spell = (prop.Value).(string)
+				}
 			}
 			newPickup.effect = effect
 			l.pickups = append(l.pickups, newPickup)

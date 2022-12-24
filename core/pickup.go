@@ -44,8 +44,10 @@ func (r *HealthEffect) GetPickedUp(game *Game) {
 
 type BookEffect struct {
 	title string
+	spell string
 }
 
 func (r *BookEffect) GetPickedUp(game *Game) {
 	fmt.Println("picked up the book called: ", r.title)
+	game.player.AddSpell(r.spell)
 }

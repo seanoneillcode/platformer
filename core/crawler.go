@@ -60,7 +60,7 @@ func NewCrawler(x float64, y float64, game *Game) *Crawler {
 			//	isLoop:          false,
 			//},
 		},
-		health:     3,
+		health:     2,
 		directionX: 1,
 		moveSpeed:  16,
 	}
