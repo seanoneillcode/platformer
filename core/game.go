@@ -120,7 +120,7 @@ const (
 	effectCrawlerDeath = "effect-crawler-death"
 )
 
-func (r *Game) SpawnEffect(name string, x, y float64) {
+func (r *Game) SpawnEffect(name string, x, y float64, isFlip bool) {
 	switch name {
 	case effectCrawlerDeath:
 		r.AddEffectSprite(&EffectSprite{
@@ -135,22 +135,24 @@ func (r *Game) SpawnEffect(name string, x, y float64) {
 				frameTimeAmount: 0.2,
 				isLoop:          false,
 			},
+			isFlip: isFlip,
 		})
 	case effectSpellHit:
 		r.AddEffectSprite(&EffectSprite{
-			x: x,
-			y: y,
-			w: 16,
-			h: 16,
+			x: x - 4,
+			y: y - 4,
+			w: 24,
+			h: 24,
 			animation: &Animation{
 				image:           r.images["effect-spell-hit"],
-				numFrames:       4,
-				size:            16,
+				numFrames:       5,
+				size:            24,
 				frameTimeAmount: 0.1,
 				isLoop:          false,
 			},
 			isTemporary: true,
 			ttl:         0.4,
+			isFlip:      isFlip,
 		})
 
 	}
