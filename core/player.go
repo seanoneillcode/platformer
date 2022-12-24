@@ -72,8 +72,8 @@ type Player struct {
 func NewPlayer(game *Game) *Player {
 	p := &Player{
 		state:            playingState,
-		health:           3,
-		maxHealth:        3,
+		health:           6,
+		maxHealth:        9,
 		x:                19 * common.TileSize,
 		y:                12 * common.TileSize,
 		sizex:            16, // physical size
