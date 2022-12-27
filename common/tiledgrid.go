@@ -37,10 +37,12 @@ type Layer struct {
 }
 
 type TiledObject struct {
-	Name       string            `json:"Name"`
+	Name       string            `json:"name"`
 	Type       string            `json:"type"`
 	X          int               `json:"x"`
 	Y          int               `json:"y"`
+	Width      int               `json:"width"`
+	Height     int               `json:"height"`
 	Properties []*TileConfigProp `json:"properties"`
 }
 
@@ -176,6 +178,8 @@ type ObjectData struct {
 	ObjectType string
 	X          int
 	Y          int
+	W          int
+	H          int
 	Properties []*ObjectProperty
 }
 
@@ -198,6 +202,8 @@ func (tg *TiledGrid) GetObjectData() []*ObjectData {
 			ObjectType: obj.Type,
 			X:          obj.X,
 			Y:          obj.Y,
+			W:          obj.Width,
+			H:          obj.Height,
 			Properties: []*ObjectProperty{},
 		}
 		for _, p := range obj.Properties {

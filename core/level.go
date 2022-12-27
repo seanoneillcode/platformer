@@ -47,6 +47,8 @@ func NewLevel(name string, game *Game) *Level {
 			newFlimsy := &Flimsy{
 				x:     float64(object.X),
 				y:     float64(object.Y),
+				w:     float64(object.W),
+				h:     float64(object.H),
 				image: game.images["flimsy"],
 			}
 			l.flimsy = append(l.flimsy, newFlimsy)

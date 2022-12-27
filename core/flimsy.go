@@ -8,6 +8,8 @@ import (
 type Flimsy struct {
 	x     float64
 	y     float64
+	w     float64
+	h     float64
 	image *ebiten.Image
 }
 
@@ -15,8 +17,8 @@ func (r *Flimsy) GetCollisionBox() CollisionBox {
 	return CollisionBox{
 		x: r.x,
 		y: r.y,
-		w: 16,
-		h: 16,
+		w: r.w,
+		h: r.h,
 	}
 }
 
