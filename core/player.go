@@ -11,7 +11,7 @@ import (
 const playingState = "playing"
 const dyingState = "dying"
 
-const standardJumpHeight = 16 * 3.1
+const standardJumpHeight = 16 * 3.2
 const forcedJumpHeight = 16 * 2
 const standardJumpTime = 0.44
 const standardFallTime = 0.4
@@ -21,7 +21,7 @@ const fudge = 0.001
 const runAcc = 20.0
 const maxRunVelocity = 100
 const ladderVelocity = 70
-const tryJumpMarginTime = 0.1
+const lateJumpMarginTime = 0.14
 const ladderGrabAllowance = 8.0
 const takeDamageTime = 0.3
 const postDamageTime = 0.6
@@ -56,7 +56,7 @@ type Player struct {
 	isFlip             bool
 	currentAnimation   string
 	animations         map[string]*Animation
-	tryJumpTimer       float64
+	lateJumpTimer      float64
 	lockedToLadder     bool
 	takeDamageTimer    float64
 	postDamageTimer    float64
@@ -202,14 +202,16 @@ func (r *Player) Update(delta float64, game *Game) {
 				tryMovey = -1
 				shouldUpdateAnimation = true
 			}
+
 			if ebiten.IsKeyPressed(ebiten.KeySpace) {
 				pressJump = true
 				shouldUpdateAnimation = true
 			}
-			r.tryJumpTimer = r.tryJumpTimer - delta
+
 			if inpututil.IsKeyJustPressed(ebiten.KeySpace) {
 				tryJump = true
-				r.tryJumpTimer = tryJumpMarginTime
+				pressJump = true
+				r.lateJumpTimer = lateJumpMarginTime
 				shouldUpdateAnimation = true
 			}
 		} else {
@@ -219,6 +221,7 @@ func (r *Player) Update(delta float64, game *Game) {
 			}
 		}
 
+		r.lateJumpTimer = r.lateJumpTimer - delta
 		time := standardJumpTime
 		if r.jumpTimer > (standardJumpTime) {
 			time = standardFallTime
@@ -299,17 +302,18 @@ func (r *Player) Update(delta float64, game *Game) {
 		r.x = newx
 		r.y = newy
 
-		if tryJump || r.tryJumpTimer > 0 {
+		if tryJump || r.lateJumpTimer > 0 {
 			if cr.hitFloor || r.coyoteTimer > 0 || r.lockedToLadder {
 				r.lockedToLadder = false
 				r.coyoteTimer = 0
 				r.velocityY = (2 * standardJumpHeight) / standardJumpTime
 				r.jumpTimer = 0
+				r.alreadyAbortedJump = false
 			}
 		}
 		if !pressJump {
 			// if player is currently jumping in the first half phase of jumping
-			if r.jumpTimer < standardJumpTime && r.wasPressingJump && !r.alreadyAbortedJump {
+			if r.jumpTimer < (standardJumpTime*0.5) && r.wasPressingJump && !r.alreadyAbortedJump {
 				r.alreadyAbortedJump = true
 				r.velocityY = (2 * minimumJumpHeight) / (standardJumpTime)
 			}
