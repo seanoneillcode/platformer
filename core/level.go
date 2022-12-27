@@ -11,6 +11,7 @@ const (
 	spawnObject  = "spawn"
 	exitObject   = "exit"
 	crawlerEnemy = "crawler"
+	flimsyObject = "flimsy"
 )
 
 type Level struct {
@@ -22,6 +23,7 @@ type Level struct {
 	exit             *Exit
 	pickups          []*Pickup
 	enemies          []Enemy
+	flimsy           []*Flimsy
 }
 
 func NewLevel(name string, game *Game) *Level {
@@ -29,6 +31,7 @@ func NewLevel(name string, game *Game) *Level {
 		background:       common.LoadImage(name + "/background.png"),
 		backgroundOffset: 60,
 		enemies:          []Enemy{},
+		flimsy:           []*Flimsy{},
 	}
 	l.tiledGrid = common.NewTileGrid(name)
 	objects := l.tiledGrid.GetObjectData()
@@ -39,6 +42,14 @@ func NewLevel(name string, game *Game) *Level {
 				x: float64(object.X),
 				y: float64(object.Y),
 			}
+		}
+		if object.Name == flimsyObject {
+			newFlimsy := &Flimsy{
+				x:     float64(object.X),
+				y:     float64(object.Y),
+				image: game.images["flimsy"],
+			}
+			l.flimsy = append(l.flimsy, newFlimsy)
 		}
 		if object.Name == exitObject {
 			l.exit = &Exit{
@@ -129,9 +140,11 @@ func (r *Level) Draw(camera common.Camera) {
 	for _, pickup := range r.pickups {
 		pickup.Draw(camera)
 	}
-
 	for _, enemy := range r.enemies {
 		enemy.Draw(camera)
+	}
+	for _, f := range r.flimsy {
+		f.Draw(camera)
 	}
 }
 
@@ -164,6 +177,16 @@ func (r *Level) RemoveEnemy(enemy Enemy) {
 		}
 	}
 	r.enemies = newEnemies
+}
+
+func (r *Level) RemoveFlimsy(flimsy *Flimsy) {
+	newFlimsy := []*Flimsy{}
+	for _, f := range r.flimsy {
+		if f != flimsy {
+			newFlimsy = append(newFlimsy, f)
+		}
+	}
+	r.flimsy = newFlimsy
 }
 
 type Enemy interface {

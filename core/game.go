@@ -41,6 +41,7 @@ func NewGame() *Game {
 			"health-bar":            common.LoadImage("health-bar.png"),
 			"health-bar-background": common.LoadImage("health-bar-background.png"),
 			"health-bar-end":        common.LoadImage("health-bar-end.png"),
+			"flimsy":                common.LoadImage("flimsy.png"),
 		},
 		lastUpdateCalled: time.Now(),
 		debug:            NewDebug(),

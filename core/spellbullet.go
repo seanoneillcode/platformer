@@ -65,6 +65,16 @@ func (r *SpellObject) Update(delta float64, game *Game) {
 			return
 		}
 	}
+
+	for _, f := range game.level.flimsy {
+		cb := f.GetCollisionBox()
+		if common.Overlap(r.x+6, r.y+6, 4, 4, cb.x, cb.y, cb.w, cb.h) {
+			game.level.RemoveFlimsy(f)
+			game.RemoveSpellObject(r)
+			game.SpawnEffect(effectSpellHit, r.x, r.y, r.moveX < 0)
+			return
+		}
+	}
 }
 
 func (r *SpellObject) Draw(camera common.Camera) {
