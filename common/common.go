@@ -15,7 +15,7 @@ const (
 	ScreenWidth  = 240
 	ScreenHeight = 180
 	Scale        = 4
-	TileSize     = 16
+	TileSize     = 16.0
 )
 
 var NormalEscapeError = errors.New("normal escape termination")
@@ -41,6 +41,16 @@ func Overlap(x1, y1, w1, h1, x2, y2, w2, h2 float64) bool {
 		return false
 	}
 	if y2 > y1+h1 || y2+h2 < y1 {
+		return false
+	}
+	return true
+}
+
+func Contains(x1, y1, w1, h1, px, py float64) bool {
+	if px > x1+w1 || px < x1 {
+		return false
+	}
+	if py > y1+h1 || py < y1 {
 		return false
 	}
 	return true

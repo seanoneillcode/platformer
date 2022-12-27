@@ -189,6 +189,14 @@ func (r *Level) RemoveFlimsy(flimsy *Flimsy) {
 	r.flimsy = newFlimsy
 }
 
+func (r *Level) GetColliders() []Collider {
+	var colliders = []Collider{}
+	for _, flimsy := range r.flimsy {
+		colliders = append(colliders, flimsy)
+	}
+	return colliders
+}
+
 type Enemy interface {
 	Update(delta float64, game *Game)
 	Draw(camera common.Camera)

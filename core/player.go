@@ -79,7 +79,7 @@ func NewPlayer(game *Game) *Player {
 		sizex:            16, // physical size
 		sizey:            16, // physical size
 		drawOffsetX:      8,  // just for drawing
-		drawOffsetY:      16, // just for drawing
+		drawOffsetY:      8,  // just for drawing
 		drawSizex:        32, // just for drawing
 		drawSizey:        32,
 		currentAnimation: "idle",
@@ -194,9 +194,9 @@ func (r *Player) Update(delta float64, game *Game) {
 				tryMovey = 1
 				shouldUpdateAnimation = true
 				if r.targetVelocityX == 0 {
-					r.isCrouch = true
 					r.currentAnimation = "crouch"
 				}
+				r.isCrouch = true
 			}
 			if ebiten.IsKeyPressed(ebiten.KeyArrowUp) {
 				tryMovey = -1
@@ -228,7 +228,7 @@ func (r *Player) Update(delta float64, game *Game) {
 		oldx := r.x
 		oldy := r.y
 
-		partial := 2.0
+		partial := 4.0
 
 		newx := r.x + (delta * r.velocityX)
 		movey := 0.0
@@ -238,97 +238,19 @@ func (r *Player) Update(delta float64, game *Game) {
 		newy := r.y - movey
 		r.velocityY = r.velocityY + (gravity * delta)
 
-		var hitWall = false
-		var hitDamage = false
-		tx, ty := int((newx+partial)/common.TileSize), int(oldy/common.TileSize)
-		td := game.level.tiledGrid.GetTileData(tx, ty)
-		if td.Block {
-			newx = float64(tx*common.TileSize) + common.TileSize + fudge - partial
-			hitWall = true
-		}
+		cr := DoCollision(oldx+partial, oldy+partial+partial, newx+partial, newy+partial+partial, r.sizex-partial-partial, r.sizey, game.level, tryFall)
 
-		tx, ty = int(((newx+partial)+(r.sizex-partial))/common.TileSize), int(oldy/common.TileSize)
-		td = game.level.tiledGrid.GetTileData(tx, ty)
-		if td.Block {
-			newx = float64(tx*common.TileSize) - (r.sizex - partial) - fudge - partial
-			hitWall = true
-		}
+		newx = cr.newX - partial
+		newy = cr.newY - partial - partial
 
-		tx, ty = int((newx+partial)/common.TileSize), int((oldy+r.sizey)/common.TileSize)
-		td = game.level.tiledGrid.GetTileData(tx, ty)
-		if td.Block {
-			newx = float64(tx*common.TileSize) + common.TileSize + fudge - partial
-			hitWall = true
-		}
-		tx, ty = int(((newx+partial)+(r.sizex-partial))/common.TileSize), int((oldy+r.sizey)/common.TileSize)
-		td = game.level.tiledGrid.GetTileData(tx, ty)
-		if td.Block {
-			newx = float64(tx*common.TileSize) - (r.sizex - partial) - fudge - partial
-			hitWall = true
-		}
-
-		var hitCeiling = false
-		var hitFloor = false
-
-		tx, ty = int((oldx+partial)/common.TileSize), int((newy+r.sizey)/common.TileSize)
-		td = game.level.tiledGrid.GetTileData(tx, ty)
-		if td.Block {
-			distance := float64(ty*common.TileSize) - (oldy + r.sizey)
-			newy = oldy + distance - fudge
-			hitFloor = true
+		if cr.hitFloor {
 			r.velocityY = 0
 			r.coyoteTimer = coyoteTimeAmount
-		}
-		if !tryFall && td.Platform && newy > oldy {
-			distance := float64(ty*common.TileSize) - (oldy + r.sizey)
-			if distance > -1 {
-				newy = oldy + distance - fudge
-				hitFloor = true
-				r.velocityY = 0
-				r.coyoteTimer = coyoteTimeAmount
-			}
-		}
-
-		tx, ty = int((oldx+partial)/common.TileSize), int((newy-4)/common.TileSize)
-		td = game.level.tiledGrid.GetTileData(tx, ty)
-		if td.Block {
-			newy = float64(ty*common.TileSize) + common.TileSize + fudge + 4
-			if newy > 0 {
-				hitCeiling = true
-			}
-		}
-
-		tx, ty = int(((oldx+partial)+(r.sizex-partial))/common.TileSize), int((newy+r.sizey)/common.TileSize)
-		td = game.level.tiledGrid.GetTileData(tx, ty)
-		if td.Block {
-			distance := float64(ty*common.TileSize) - (oldy + r.sizey)
-			newy = oldy + distance - fudge
-			hitFloor = true
-			r.velocityY = 0
-			r.coyoteTimer = coyoteTimeAmount
-		}
-		if !tryFall && td.Platform && newy > oldy {
-			distance := float64(ty*common.TileSize) - (oldy + r.sizey)
-			if distance > -1 {
-				newy = oldy + distance - fudge
-				hitFloor = true
-				r.velocityY = 0
-				r.coyoteTimer = coyoteTimeAmount
-			}
-		}
-
-		tx, ty = int(((oldx+partial)+(r.sizex-partial))/common.TileSize), int((newy-4)/common.TileSize)
-		td = game.level.tiledGrid.GetTileData(tx, ty)
-		if td.Block {
-			newy = float64(ty*common.TileSize) + common.TileSize + fudge + 4
-			if newy > 0 {
-				hitCeiling = true
-			}
 		}
 
 		var touchingLadder = false
-		tx, ty = int((oldx+(r.sizex/2.0))/common.TileSize), int((oldy+4)/common.TileSize)
-		td = game.level.tiledGrid.GetTileData(tx, ty)
+		tx, ty := int((oldx+(r.sizex/2.0))/common.TileSize), int((oldy+partial)/common.TileSize)
+		td := game.level.tiledGrid.GetTileData(tx, ty)
 		if td.Ladder {
 			touchingLadder = true
 			if tryMovey != 0 {
@@ -341,7 +263,7 @@ func (r *Player) Update(delta float64, game *Game) {
 			}
 
 		}
-		tx, ty = int((oldx+(r.sizex/2.0))/common.TileSize), int((oldy+r.sizey)/common.TileSize)
+		tx, ty = int((oldx+(r.sizex/2.0))/common.TileSize), int((oldy+r.sizey+partial+partial)/common.TileSize)
 		td = game.level.tiledGrid.GetTileData(tx, ty)
 		if td.Ladder {
 			touchingLadder = true
@@ -354,7 +276,7 @@ func (r *Player) Update(delta float64, game *Game) {
 
 					// if move down, check for block
 					if tryMovey == 1 {
-						tx, ty = int((oldx+(r.sizex/2.0))/common.TileSize), int((newy+r.sizey)/common.TileSize)
+						tx, ty = int((oldx+(r.sizex/2.0))/common.TileSize), int((newy+r.sizey+partial+partial)/common.TileSize)
 						td = game.level.tiledGrid.GetTileData(tx, ty)
 						if td.Block {
 							r.lockedToLadder = false
@@ -367,7 +289,8 @@ func (r *Player) Update(delta float64, game *Game) {
 		if !touchingLadder {
 			r.lockedToLadder = false
 		}
-		tx, ty = int((oldx+(r.sizex/2.0))/common.TileSize), int((oldy+r.sizey-8)/common.TileSize)
+		var hitDamage bool
+		tx, ty = int((oldx+(r.sizex/2.0))/common.TileSize), int((oldy+r.sizey)/common.TileSize)
 		td = game.level.tiledGrid.GetTileData(tx, ty)
 		if td.Damage {
 			hitDamage = true
@@ -377,7 +300,7 @@ func (r *Player) Update(delta float64, game *Game) {
 		r.y = newy
 
 		if tryJump || r.tryJumpTimer > 0 {
-			if hitFloor || r.coyoteTimer > 0 || r.lockedToLadder {
+			if cr.hitFloor || r.coyoteTimer > 0 || r.lockedToLadder {
 				r.lockedToLadder = false
 				r.coyoteTimer = 0
 				r.velocityY = (2 * standardJumpHeight) / standardJumpTime
@@ -395,7 +318,7 @@ func (r *Player) Update(delta float64, game *Game) {
 		if r.coyoteTimer > 0 {
 			r.coyoteTimer = r.coyoteTimer - delta
 		}
-		if hitFloor {
+		if cr.hitFloor {
 			r.lockedToLadder = false
 		}
 		if r.lockedToLadder {
@@ -411,12 +334,12 @@ func (r *Player) Update(delta float64, game *Game) {
 				r.currentAnimation = "jump"
 			}
 		}
-		if hitCeiling {
+		if cr.hitCeiling {
 			r.alreadyAbortedJump = true
 			r.velocityY = -20
 		}
 		r.wasPressingJump = pressJump
-		if hitWall {
+		if cr.hitWall {
 			r.targetVelocityX = 0
 			r.velocityX = 0
 		}
@@ -468,9 +391,9 @@ func (r *Player) Update(delta float64, game *Game) {
 					moveX = moveX * -1
 					posX = r.x - 8
 				}
-				posY := r.y - 10
+				posY := r.y - 2
 				if r.isCrouch {
-					posY = r.y - 2
+					posY = r.y + 6
 				}
 				spellObj := NewSpellObject(game, posX, posY, moveX, 0)
 				game.AddSpellObject(spellObj)
