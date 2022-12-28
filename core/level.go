@@ -11,6 +11,7 @@ const (
 	spawnObject  = "spawn"
 	exitObject   = "exit"
 	crawlerEnemy = "crawler"
+	blobEnemy    = "blob"
 	flimsyObject = "flimsy"
 )
 
@@ -65,7 +66,11 @@ func NewLevel(name string, game *Game) *Level {
 			}
 		}
 		if object.Name == crawlerEnemy {
-			newEnemy := NewCrawler(float64(object.X), float64(object.Y), game)
+			newEnemy := NewCrawlerEnemy(float64(object.X), float64(object.Y), game)
+			l.enemies = append(l.enemies, newEnemy)
+		}
+		if object.Name == blobEnemy {
+			newEnemy := NewBlobEnemy(float64(object.X), float64(object.Y), game)
 			l.enemies = append(l.enemies, newEnemy)
 		}
 		if object.Name == healthPickup {

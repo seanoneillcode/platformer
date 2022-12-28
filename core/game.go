@@ -17,6 +17,7 @@ type Game struct {
 	spellObjects     []*SpellObject
 	effectSprites    []*EffectSprite
 	hud              *Hud
+	firstUpdate      bool
 }
 
 func NewGame() *Game {
@@ -36,6 +37,11 @@ func NewGame() *Game {
 			"crawler-idle":          common.LoadImage("crawler-idle.png"),
 			"crawler-hurt":          common.LoadImage("crawler-hurt.png"),
 			"crawler-die":           common.LoadImage("crawler-die.png"),
+			"blob-run":              common.LoadImage("blob-run.png"),
+			"blob-idle":             common.LoadImage("blob-idle.png"),
+			"blob-hurt":             common.LoadImage("blob-hurt.png"),
+			"blob-die":              common.LoadImage("blob-die.png"),
+			"blob-attack":           common.LoadImage("blob-attack.png"),
 			"spell-bullet":          common.LoadImage("spell-bullet.png"),
 			"effect-spell-hit":      common.LoadImage("effect-spell-hit.png"),
 			"health-bar":            common.LoadImage("health-bar.png"),
@@ -43,15 +49,23 @@ func NewGame() *Game {
 			"health-bar-end":        common.LoadImage("health-bar-end.png"),
 			"flimsy":                common.LoadImage("flimsy.png"),
 		},
-		lastUpdateCalled: time.Now(),
-		debug:            NewDebug(),
+		debug:       NewDebug(),
+		firstUpdate: true,
 	}
-	r.LoadLevel("alpha")
+	r.LoadLevel("beta")
 	r.hud = NewHud(r)
 	return r
 }
 
 func (r *Game) Update() error {
+	if r.firstUpdate {
+		// we want a reasonable value for the delta, so we 'skip' the first update
+		// otherwise the first movement of everything that moves is scaled by a large delta
+		// causing things to go through walls and such.
+		r.firstUpdate = false
+		r.lastUpdateCalled = time.Now()
+		return nil
+	}
 	delta := float64(time.Now().Sub(r.lastUpdateCalled).Milliseconds()) / 1000
 	r.lastUpdateCalled = time.Now()
 
@@ -126,6 +140,7 @@ func (r *Game) AddEffectSprite(effectSprite *EffectSprite) {
 const (
 	effectSpellHit     = "effect-spell-hit"
 	effectCrawlerDeath = "effect-crawler-death"
+	effectBlobDeath    = "effect-blob-death"
 )
 
 func (r *Game) SpawnEffect(name string, x, y float64, isFlip bool) {
@@ -141,6 +156,21 @@ func (r *Game) SpawnEffect(name string, x, y float64, isFlip bool) {
 				numFrames:       2,
 				size:            24,
 				frameTimeAmount: 0.2,
+				isLoop:          false,
+			},
+			isFlip: isFlip,
+		})
+	case effectBlobDeath:
+		r.AddEffectSprite(&EffectSprite{
+			x: x,
+			y: y,
+			w: 32,
+			h: 32,
+			animation: &Animation{
+				image:           r.images["blob-die"],
+				numFrames:       6,
+				size:            32,
+				frameTimeAmount: 0.1,
 				isLoop:          false,
 			},
 			isFlip: isFlip,
