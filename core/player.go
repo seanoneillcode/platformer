@@ -242,10 +242,10 @@ func (r *Player) Update(delta float64, game *Game) {
 		newy := r.y - movey
 		r.velocityY = r.velocityY + (gravity * delta)
 
-		cr := DoCollision(oldx+partial, oldy+partial+partial, newx+partial, newy+partial+partial, r.sizex-partial-partial, r.sizey, game.level, tryFall)
+		cr := DoCollision(oldx+partial, oldy+partial, newx+partial, newy+partial, r.sizex-partial-partial, r.sizey+partial, game.level, tryFall)
 
 		newx = cr.newX - partial
-		newy = cr.newY - partial - partial
+		newy = cr.newY - partial
 
 		if cr.hitFloor {
 			r.velocityY = 0

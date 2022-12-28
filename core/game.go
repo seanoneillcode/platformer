@@ -46,7 +46,7 @@ func NewGame() *Game {
 		lastUpdateCalled: time.Now(),
 		debug:            NewDebug(),
 	}
-	r.LoadLevel("enemy-level")
+	r.LoadLevel("alpha")
 	r.hud = NewHud(r)
 	return r
 }
