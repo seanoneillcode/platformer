@@ -84,7 +84,7 @@ func NewPlayer(game *Game) *Player {
 		drawSizey:        32,
 		currentAnimation: "idle",
 		spells:           map[string]bool{},
-		currentSpell:     "spell-bullet",
+		currentSpell:     "", // spell-bullet
 		animations: map[string]*Animation{
 			"run": {
 				image:           game.images["player-run"],
@@ -151,6 +151,7 @@ func NewPlayer(game *Game) *Player {
 }
 
 func (r *Player) Update(delta float64, game *Game) {
+	var aimY float64
 
 	switch r.state {
 	case dyingState:
@@ -164,7 +165,7 @@ func (r *Player) Update(delta float64, game *Game) {
 		var tryJump bool
 		var pressJump bool
 		var tryFall bool
-		var tryMovey = 0.0
+		var tryMoveY = 0.0
 		r.targetVelocityX = 0
 		r.currentAnimation = "idle"
 		shouldUpdateAnimation := false
@@ -191,7 +192,7 @@ func (r *Player) Update(delta float64, game *Game) {
 			r.isCrouch = false
 			if ebiten.IsKeyPressed(ebiten.KeyArrowDown) {
 				tryFall = true
-				tryMovey = 1
+				tryMoveY = 1
 				shouldUpdateAnimation = true
 				if r.targetVelocityX == 0 {
 					r.currentAnimation = "crouch"
@@ -199,7 +200,7 @@ func (r *Player) Update(delta float64, game *Game) {
 				r.isCrouch = true
 			}
 			if ebiten.IsKeyPressed(ebiten.KeyArrowUp) {
-				tryMovey = -1
+				tryMoveY = -1
 				shouldUpdateAnimation = true
 			}
 
@@ -256,12 +257,12 @@ func (r *Player) Update(delta float64, game *Game) {
 		td := game.level.tiledGrid.GetTileData(tx, ty)
 		if td.Ladder {
 			touchingLadder = true
-			if tryMovey != 0 {
+			if tryMoveY != 0 {
 				middle := float64(tx * common.TileSize)
 				left, right := middle-ladderGrabAllowance, middle+ladderGrabAllowance
 				if oldx > left && oldx < right {
 					r.lockedToLadder = true
-					newy = oldy + (delta * ladderVelocity * tryMovey)
+					newy = oldy + (delta * ladderVelocity * tryMoveY)
 				}
 			}
 
@@ -270,15 +271,15 @@ func (r *Player) Update(delta float64, game *Game) {
 		td = game.level.tiledGrid.GetTileData(tx, ty)
 		if td.Ladder {
 			touchingLadder = true
-			if tryMovey != 0 {
+			if tryMoveY != 0 {
 				middle := float64(tx * common.TileSize)
 				left, right := middle-ladderGrabAllowance, middle+ladderGrabAllowance
 				if oldx > left && oldx < right {
 					r.lockedToLadder = true
-					newy = oldy + (delta * ladderVelocity * tryMovey)
+					newy = oldy + (delta * ladderVelocity * tryMoveY)
 
 					// if move down, check for block
-					if tryMovey == 1 {
+					if tryMoveY == 1 {
 						tx, ty = int((oldx+(r.sizex/2.0))/common.TileSize), int((newy+r.sizey+partial+partial)/common.TileSize)
 						td = game.level.tiledGrid.GetTileData(tx, ty)
 						if td.Block {
@@ -325,18 +326,19 @@ func (r *Player) Update(delta float64, game *Game) {
 		if cr.hitFloor {
 			r.lockedToLadder = false
 		}
-		if r.lockedToLadder {
-			r.currentAnimation = "climb"
-			r.velocityY = 0
-			r.alreadyAbortedJump = false
-		}
+
 		if oldy != newy {
-			if r.velocityY < 0 {
+			if r.velocityY <= 0 {
 				r.currentAnimation = "fall"
 			}
 			if r.velocityY > 0 {
 				r.currentAnimation = "jump"
 			}
+		}
+		if r.lockedToLadder {
+			r.currentAnimation = "climb"
+			r.velocityY = 0
+			r.alreadyAbortedJump = false
 		}
 		if cr.hitCeiling {
 			r.alreadyAbortedJump = true
@@ -346,6 +348,9 @@ func (r *Player) Update(delta float64, game *Game) {
 		if cr.hitWall {
 			r.targetVelocityX = 0
 			r.velocityX = 0
+		}
+		if (tryMoveY == 1 && !cr.hitFloor) || tryMoveY == -1 {
+			aimY = tryMoveY
 		}
 
 		if r.velocityX < r.targetVelocityX {
@@ -389,17 +394,33 @@ func (r *Player) Update(delta float64, game *Game) {
 			case "spell-bullet":
 				r.castSpellTimer = castSpellCoolDownTime
 
-				moveX := spellBulletSpeed
-				posX := r.x + 8
-				if r.isFlip {
-					moveX = moveX * -1
-					posX = r.x - 8
+				var moveX float64
+				var moveY float64
+				var posX float64
+				var posY float64
+
+				// shoot up or down
+				if aimY != 0 {
+					moveY = -spellBulletSpeed
+					posX = r.x
+					posY = r.y - 8
+					if aimY == 1 {
+						moveY = spellBulletSpeed
+						posY = r.y + 16
+					}
+				} else {
+					moveX = spellBulletSpeed
+					posX = r.x + 8
+					if r.isFlip {
+						moveX = moveX * -1
+						posX = r.x - 8
+					}
+					posY = r.y - 2
+					if r.isCrouch {
+						posY = r.y + 6
+					}
 				}
-				posY := r.y - 2
-				if r.isCrouch {
-					posY = r.y + 6
-				}
-				spellObj := NewSpellObject(game, posX, posY, moveX, 0)
+				spellObj := NewSpellObject(game, posX, posY, moveX, moveY)
 				game.AddSpellObject(spellObj)
 			}
 		}

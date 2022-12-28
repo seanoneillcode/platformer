@@ -6,27 +6,32 @@ import (
 )
 
 const spellBulletSpeed = 200.0
+const ninetyDegreesInRads = 1.57
 
 type SpellObject struct {
 	x         float64
 	y         float64
-	width     float64
+	w         float64
+	h         float64
 	animation *Animation
 	moveX     float64
 	moveY     float64
 	ttl       float64
-	isFlip    bool
+	isFlipX   bool
+	isFlipY   bool
 }
 
 func NewSpellObject(game *Game, x, y, moveX, moveY float64) *SpellObject {
 	return &SpellObject{
-		x:      x,
-		y:      y,
-		moveX:  moveX,
-		moveY:  moveY,
-		ttl:    10,
-		width:  16,
-		isFlip: moveX < 0,
+		x:       x,
+		y:       y,
+		moveX:   moveX,
+		moveY:   moveY,
+		ttl:     10,
+		w:       16,
+		h:       16,
+		isFlipX: moveX < 0,
+		isFlipY: moveY < 0,
 		animation: &Animation{
 			image:           game.images["spell-bullet"],
 			numFrames:       4,
@@ -79,11 +84,22 @@ func (r *SpellObject) Update(delta float64, game *Game) {
 
 func (r *SpellObject) Draw(camera common.Camera) {
 	op := &ebiten.DrawImageOptions{}
-	if r.isFlip {
+
+	if r.isFlipX {
 		op.GeoM.Scale(-1, 1)
-		op.GeoM.Translate(r.width, 0)
+		op.GeoM.Translate(r.w, 0)
+	}
+	if r.moveY != 0 {
+		op.GeoM.Translate(-8, -8)
+		amount := ninetyDegreesInRads
+		if r.isFlipY {
+			amount = -ninetyDegreesInRads
+		}
+		op.GeoM.Rotate(amount) // 90 degrees in rads
+		op.GeoM.Translate(8, 8)
 	}
 	op.GeoM.Translate(r.x, r.y)
+
 	op.GeoM.Scale(common.Scale, common.Scale)
 	camera.DrawImage(r.animation.GetCurrentFrame(), op)
 }
