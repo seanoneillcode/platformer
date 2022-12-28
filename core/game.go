@@ -52,7 +52,7 @@ func NewGame() *Game {
 		debug:       NewDebug(),
 		firstUpdate: true,
 	}
-	r.LoadLevel("beta")
+	r.LoadLevel("level-beta")
 	r.hud = NewHud(r)
 	return r
 }

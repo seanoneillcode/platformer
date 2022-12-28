@@ -17,6 +17,7 @@ const (
 	resourceLevelsDirectory = "res/levels/"
 	groundLayer             = "ground"
 	objectsLayer            = "objects"
+	imageLayer              = "image"
 	backgroundLayer         = "background"
 )
 
@@ -27,6 +28,7 @@ type TiledGrid struct {
 	TileMap           map[int]*TileData
 	GroundLayer       *Layer
 	ObjectLayer       *Layer
+	BackgroundImage   string
 }
 
 type Layer struct {
@@ -34,6 +36,7 @@ type Layer struct {
 	Height  int           `json:"height"`
 	Width   int           `json:"width"`
 	Name    string        `json:"name"`
+	Image   string        `json:"image"`
 	Objects []TiledObject `json:"objects"`
 }
 
@@ -75,11 +78,10 @@ type TileConfigProp struct {
 }
 
 func NewTileGrid(fileName string) *TiledGrid {
+	println("new tiled grid ", fileName)
 	var tiledGrid TiledGrid
 
-	levelDirectory := filepath.Join(resourceLevelsDirectory, fileName+"/")
-
-	levelFile, err := os.Open(filepath.Join(levelDirectory, "level.json"))
+	levelFile, err := os.Open(filepath.Join(resourceLevelsDirectory, fileName+".json"))
 	if err != nil {
 		log.Fatal("opening config file", err.Error())
 	}
@@ -95,9 +97,12 @@ func NewTileGrid(fileName string) *TiledGrid {
 		if l.Name == objectsLayer {
 			tiledGrid.ObjectLayer = l
 		}
+		if l.Name == imageLayer {
+			tiledGrid.BackgroundImage = l.Image
+		}
 	}
 
-	tiledGrid.TileSet = loadTileSet(resourceLevelsDirectory, levelDirectory, tiledGrid.TileSetReferences[0])
+	tiledGrid.TileSet = loadTileSet(resourceLevelsDirectory, tiledGrid.TileSetReferences[0])
 
 	tiledGrid.TileMap = map[int]*TileData{}
 	for _, tile := range tiledGrid.TileSet.Tiles {
@@ -124,7 +129,7 @@ func NewTileGrid(fileName string) *TiledGrid {
 	return &tiledGrid
 }
 
-func loadTileSet(resourceLevelsDirectory string, levelDirectory string, ref *TileSetReference) *TileSet {
+func loadTileSet(levelDirectory string, ref *TileSetReference) *TileSet {
 	tileSetConfigFile, err := os.Open(filepath.Join(levelDirectory, ref.Source))
 	if err != nil {
 		log.Fatal("opening config file", err.Error())
@@ -138,7 +143,7 @@ func loadTileSet(resourceLevelsDirectory string, levelDirectory string, ref *Til
 	tileSet.numTilesX = tileSet.ImageWidth / TileSize
 	tileSet.numTilesY = tileSet.ImageHeight / TileSize
 
-	b, err := ioutil.ReadFile(filepath.Join(resourceLevelsDirectory, tileSet.ImageFileName))
+	b, err := ioutil.ReadFile(filepath.Join(levelDirectory, tileSet.ImageFileName))
 	if err != nil {
 		log.Fatalf("failed to open file: %v", err)
 	}

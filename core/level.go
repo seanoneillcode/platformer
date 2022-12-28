@@ -29,12 +29,12 @@ type Level struct {
 
 func NewLevel(name string, game *Game) *Level {
 	l := &Level{
-		background:       common.LoadImage("levels/" + name + "/background.png"),
 		backgroundOffset: 60,
 		enemies:          []Enemy{},
 		flimsy:           []*Flimsy{},
 	}
 	l.tiledGrid = common.NewTileGrid(name)
+	l.background = common.LoadImage("levels/" + l.tiledGrid.BackgroundImage)
 	objects := l.tiledGrid.GetObjectData()
 	l.pickups = []*Pickup{}
 	for _, object := range objects {
