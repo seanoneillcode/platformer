@@ -28,7 +28,7 @@ type Level struct {
 
 func NewLevel(name string, game *Game) *Level {
 	l := &Level{
-		background:       common.LoadImage(name + "/background.png"),
+		background:       common.LoadImage("levels/" + name + "/background.png"),
 		backgroundOffset: 60,
 		enemies:          []Enemy{},
 		flimsy:           []*Flimsy{},

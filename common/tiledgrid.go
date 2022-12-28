@@ -13,10 +13,11 @@ import (
 )
 
 const (
-	resourceDirectory = "res/"
-	groundLayer       = "ground"
-	objectsLayer      = "objects"
-	backgroundLayer   = "background"
+	resourceDirectory       = "res/"
+	resourceLevelsDirectory = "res/levels/"
+	groundLayer             = "ground"
+	objectsLayer            = "objects"
+	backgroundLayer         = "background"
 )
 
 type TiledGrid struct {
@@ -76,7 +77,7 @@ type TileConfigProp struct {
 func NewTileGrid(fileName string) *TiledGrid {
 	var tiledGrid TiledGrid
 
-	levelDirectory := filepath.Join(resourceDirectory, fileName+"/")
+	levelDirectory := filepath.Join(resourceLevelsDirectory, fileName+"/")
 
 	levelFile, err := os.Open(filepath.Join(levelDirectory, "level.json"))
 	if err != nil {
@@ -96,7 +97,7 @@ func NewTileGrid(fileName string) *TiledGrid {
 		}
 	}
 
-	tiledGrid.TileSet = loadTileSet(levelDirectory, tiledGrid.TileSetReferences[0])
+	tiledGrid.TileSet = loadTileSet(resourceLevelsDirectory, levelDirectory, tiledGrid.TileSetReferences[0])
 
 	tiledGrid.TileMap = map[int]*TileData{}
 	for _, tile := range tiledGrid.TileSet.Tiles {
@@ -123,7 +124,7 @@ func NewTileGrid(fileName string) *TiledGrid {
 	return &tiledGrid
 }
 
-func loadTileSet(levelDirectory string, ref *TileSetReference) *TileSet {
+func loadTileSet(resourceLevelsDirectory string, levelDirectory string, ref *TileSetReference) *TileSet {
 	tileSetConfigFile, err := os.Open(filepath.Join(levelDirectory, ref.Source))
 	if err != nil {
 		log.Fatal("opening config file", err.Error())
@@ -137,7 +138,7 @@ func loadTileSet(levelDirectory string, ref *TileSetReference) *TileSet {
 	tileSet.numTilesX = tileSet.ImageWidth / TileSize
 	tileSet.numTilesY = tileSet.ImageHeight / TileSize
 
-	b, err := ioutil.ReadFile(filepath.Join(levelDirectory, tileSet.ImageFileName))
+	b, err := ioutil.ReadFile(filepath.Join(resourceLevelsDirectory, tileSet.ImageFileName))
 	if err != nil {
 		log.Fatalf("failed to open file: %v", err)
 	}

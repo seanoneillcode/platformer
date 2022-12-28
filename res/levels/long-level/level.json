@@ -28,7 +28,7 @@
                  "visible":true,
                  "width":16,
                  "x":304,
-                 "y":272
+                 "y":256
                 }, 
                 {
                  "height":32,
@@ -157,7 +157,7 @@
  "tilesets":[
         {
          "firstgid":1,
-         "source":"tileset.json"
+         "source":"..\/tileset.json"
         }],
  "tilewidth":16,
  "type":"map",
