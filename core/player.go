@@ -60,9 +60,9 @@ type Player struct {
 	lockedToLadder     bool
 	takeDamageTimer    float64
 	postDamageTimer    float64
-	health             int
+	Health             int
 	deathTimer         float64
-	maxHealth          int
+	MaxHealth          int
 	castSpellTimer     float64
 	isCrouch           bool
 	currentSpell       string
@@ -72,8 +72,8 @@ type Player struct {
 func NewPlayer(game *Game) *Player {
 	p := &Player{
 		state:            playingState,
-		health:           6,
-		maxHealth:        9,
+		Health:           6,
+		MaxHealth:        9,
 		x:                19 * common.TileSize,
 		y:                12 * common.TileSize,
 		sizex:            16, // physical size
@@ -87,56 +87,56 @@ func NewPlayer(game *Game) *Player {
 		currentSpell:     "spell-bullet", // spell-bullet
 		animations: map[string]*Animation{
 			"run": {
-				image:           game.images["player-run"],
+				image:           game.res.GetImage("player-run"),
 				numFrames:       6,
 				size:            32,
 				frameTimeAmount: 0.1,
 				isLoop:          true,
 			},
 			"idle": {
-				image:           game.images["player-idle"],
+				image:           game.res.GetImage("player-idle"),
 				numFrames:       1,
 				size:            32,
 				frameTimeAmount: 1,
 				isLoop:          true,
 			},
 			"crouch": {
-				image:           game.images["player-crouch"],
+				image:           game.res.GetImage("player-crouch"),
 				numFrames:       1,
 				size:            32,
 				frameTimeAmount: 1,
 				isLoop:          true,
 			},
 			"jump": {
-				image:           game.images["player-jump"],
+				image:           game.res.GetImage("player-jump"),
 				numFrames:       1,
 				size:            32,
 				frameTimeAmount: 1,
 				isLoop:          true,
 			},
 			"death": {
-				image:           game.images["player-death"],
+				image:           game.res.GetImage("player-death"),
 				numFrames:       3,
 				size:            32,
 				frameTimeAmount: 0.4,
 				isLoop:          false,
 			},
 			"fall": {
-				image:           game.images["player-fall"],
+				image:           game.res.GetImage("player-fall"),
 				numFrames:       1,
 				size:            32,
 				frameTimeAmount: 1,
 				isLoop:          true,
 			},
 			"climb": {
-				image:           game.images["player-climb"],
+				image:           game.res.GetImage("player-climb"),
 				numFrames:       2,
 				size:            32,
 				frameTimeAmount: 0.2,
 				isLoop:          true,
 			},
 			"hurt": {
-				image:           game.images["player-hurt"],
+				image:           game.res.GetImage("player-hurt"),
 				numFrames:       1,
 				size:            32,
 				frameTimeAmount: 1,
@@ -242,7 +242,7 @@ func (r *Player) Update(delta float64, game *Game) {
 		newy := r.y - movey
 		r.velocityY = r.velocityY + (gravity * delta)
 
-		cr := DoCollision(oldx+partial, oldy+partial, newx+partial, newy+partial, r.sizex-partial-partial, r.sizey+partial, game.level, tryFall)
+		cr := DoCollision(oldx+partial, oldy+partial, newx+partial, newy+partial, r.sizex-partial-partial, r.sizey+partial, game.Level, tryFall)
 
 		newx = cr.newX - partial
 		newy = cr.newY - partial
@@ -254,7 +254,7 @@ func (r *Player) Update(delta float64, game *Game) {
 
 		var touchingLadder = false
 		tx, ty := int((oldx+(r.sizex/2.0))/common.TileSize), int((oldy+partial)/common.TileSize)
-		td := game.level.tiledGrid.GetTileData(tx, ty)
+		td := game.Level.tiledGrid.GetTileData(tx, ty)
 		if td.Ladder {
 			touchingLadder = true
 			if tryMoveY != 0 {
@@ -268,7 +268,7 @@ func (r *Player) Update(delta float64, game *Game) {
 
 		}
 		tx, ty = int((oldx+(r.sizex/2.0))/common.TileSize), int((oldy+r.sizey+partial+partial)/common.TileSize)
-		td = game.level.tiledGrid.GetTileData(tx, ty)
+		td = game.Level.tiledGrid.GetTileData(tx, ty)
 		if td.Ladder {
 			touchingLadder = true
 			if tryMoveY != 0 {
@@ -281,7 +281,7 @@ func (r *Player) Update(delta float64, game *Game) {
 					// if move down, check for block
 					if tryMoveY == 1 {
 						tx, ty = int((oldx+(r.sizex/2.0))/common.TileSize), int((newy+r.sizey+partial+partial)/common.TileSize)
-						td = game.level.tiledGrid.GetTileData(tx, ty)
+						td = game.Level.tiledGrid.GetTileData(tx, ty)
 						if td.Block {
 							r.lockedToLadder = false
 							newy = oldy
@@ -295,7 +295,7 @@ func (r *Player) Update(delta float64, game *Game) {
 		}
 		var hitDamage bool
 		tx, ty = int((oldx+(r.sizex/2.0))/common.TileSize), int((oldy+r.sizey)/common.TileSize)
-		td = game.level.tiledGrid.GetTileData(tx, ty)
+		td = game.Level.tiledGrid.GetTileData(tx, ty)
 		if td.Damage {
 			hitDamage = true
 		}
@@ -313,7 +313,7 @@ func (r *Player) Update(delta float64, game *Game) {
 			}
 		}
 		if !pressJump {
-			// if player is currently jumping in the first half phase of jumping
+			// if Player is currently jumping in the first half phase of jumping
 			if r.jumpTimer < (standardJumpTime*0.5) && r.wasPressingJump && !r.alreadyAbortedJump {
 				r.alreadyAbortedJump = true
 				r.velocityY = (2 * minimumJumpHeight) / (standardJumpTime)
@@ -366,7 +366,7 @@ func (r *Player) Update(delta float64, game *Game) {
 			}
 		}
 		if hitDamage {
-			game.player.TakeDamage(game)
+			game.Player.TakeDamage(game)
 		}
 		if r.takeDamageTimer > 0 {
 			r.takeDamageTimer -= delta
@@ -460,8 +460,8 @@ func (r *Player) TakeDamage(game *Game) {
 	if r.postDamageTimer > 0 {
 		return
 	}
-	r.health -= 1
-	if r.health > 0 {
+	r.Health -= 1
+	if r.Health > 0 {
 		r.takeDamageTimer = takeDamageTime
 		r.ForceJump()
 	} else {
@@ -476,9 +476,9 @@ func (r *Player) ForceJump() {
 }
 
 func (r *Player) AddHealth(amount int) {
-	r.health += amount
-	if r.health > r.maxHealth {
-		r.health = r.maxHealth
+	r.Health += amount
+	if r.Health > r.MaxHealth {
+		r.Health = r.MaxHealth
 	}
 }
 

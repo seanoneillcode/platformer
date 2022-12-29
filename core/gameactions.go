@@ -3,21 +3,21 @@ package core
 import "fmt"
 
 func (r *Game) LoadLevel(name string) {
-	r.level = NewLevel(name, r)
-	r.player = NewPlayer(r)
-	r.player.x = r.level.spawn.x
-	r.player.y = r.level.spawn.y
-	r.camera = NewCamera()
-	r.camera.Target(r.player)
-	fmt.Println("load level ", name)
+	r.Level = NewLevel(name, r)
+	r.Player = NewPlayer(r)
+	r.Player.x = r.Level.spawn.x
+	r.Player.y = r.Level.spawn.y
+	r.Camera = NewCamera()
+	r.Camera.Target(r.Player)
+	fmt.Println("load Level ", name)
 }
 
 func (r *Game) PlayerDeath() {
-	r.player = NewPlayer(r)
-	r.player.x = r.level.spawn.x
-	r.player.y = r.level.spawn.y
-	r.camera.Target(r.player)
-	fmt.Println("player death")
+	r.Player = NewPlayer(r)
+	r.Player.x = r.Level.spawn.x
+	r.Player.y = r.Level.spawn.y
+	r.Camera.Target(r.Player)
+	fmt.Println("Player death")
 }
 
 func (r *Game) MoveToNextLevel(level string) {

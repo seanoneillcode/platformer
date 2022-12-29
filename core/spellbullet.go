@@ -33,7 +33,7 @@ func NewSpellObject(game *Game, x, y, moveX, moveY float64) *SpellObject {
 		isFlipX: moveX < 0,
 		isFlipY: moveY < 0,
 		animation: &Animation{
-			image:           game.images["spell-bullet"],
+			image:           game.res.GetImage("spell-bullet"),
 			numFrames:       4,
 			size:            16,
 			frameTimeAmount: 0.1,
@@ -52,16 +52,16 @@ func (r *SpellObject) Update(delta float64, game *Game) {
 		game.SpawnEffect(effectSpellHit, r.x, r.y, r.moveX < 0)
 		return
 	}
-	// check for collision with level, enemies, player etc
+	// check for collision with Level, enemies, Player etc
 	tx, ty := int((r.x+8)/common.TileSize), int((r.y+8)/common.TileSize)
-	td := game.level.tiledGrid.GetTileData(tx, ty)
+	td := game.Level.tiledGrid.GetTileData(tx, ty)
 	if td.Block {
 		game.RemoveSpellObject(r)
 		game.SpawnEffect(effectSpellHit, r.x, r.y, r.moveX < 0)
 		return
 	}
 
-	for _, e := range game.level.enemies {
+	for _, e := range game.Level.enemies {
 		cb := e.GetCollisionBox()
 		if common.Overlap(r.x+6, r.y+6, 4, 4, cb.x, cb.y, cb.w, cb.h) {
 			e.GetHurt(game)
@@ -71,10 +71,10 @@ func (r *SpellObject) Update(delta float64, game *Game) {
 		}
 	}
 
-	for _, f := range game.level.flimsy {
+	for _, f := range game.Level.flimsy {
 		cb := f.GetCollisionBox()
 		if common.Overlap(r.x+6, r.y+6, 4, 4, cb.x, cb.y, cb.w, cb.h) {
-			game.level.RemoveFlimsy(f)
+			game.Level.RemoveFlimsy(f)
 			game.RemoveSpellObject(r)
 			game.SpawnEffect(effectSpellHit, r.x, r.y, r.moveX < 0)
 			return

@@ -35,11 +35,11 @@ func (c *Camera) Update(delta float64, game *Game) {
 	if c.y < 0 {
 		c.y = 0
 	}
-	maxWidth := float64((game.level.tiledGrid.GroundLayer.Width * common.TileSize) - common.ScreenWidth)
+	maxWidth := float64((game.Level.tiledGrid.GroundLayer.Width * common.TileSize) - common.ScreenWidth)
 	if c.x > maxWidth {
 		c.x = maxWidth
 	}
-	maxHeight := float64((game.level.tiledGrid.GroundLayer.Height * common.TileSize) - common.ScreenHeight)
+	maxHeight := float64((game.Level.tiledGrid.GroundLayer.Height * common.TileSize) - common.ScreenHeight)
 	if c.y > maxHeight {
 		c.y = maxHeight
 	}

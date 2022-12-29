@@ -32,21 +32,21 @@ func NewCrawlerEnemy(x float64, y float64, game *Game) *CrawlerEnemy {
 		currentAnimation: "run",
 		animations: map[string]*Animation{
 			"run": {
-				image:           game.images["crawler-run"],
+				image:           game.res.GetImage("crawler-run"),
 				numFrames:       5,
 				size:            24,
 				frameTimeAmount: 0.1,
 				isLoop:          true,
 			},
 			"idle": {
-				image:           game.images["crawler-idle"],
+				image:           game.res.GetImage("crawler-idle"),
 				numFrames:       2,
 				size:            24,
 				frameTimeAmount: 0.4,
 				isLoop:          true,
 			},
 			"hurt": {
-				image:           game.images["crawler-hurt"],
+				image:           game.res.GetImage("crawler-hurt"),
 				numFrames:       2,
 				size:            24,
 				frameTimeAmount: 0.1,
@@ -60,8 +60,8 @@ func NewCrawlerEnemy(x float64, y float64, game *Game) *CrawlerEnemy {
 }
 
 func (r *CrawlerEnemy) Update(delta float64, game *Game) {
-	if common.Overlap(game.player.x+4, game.player.y+8, 8, 8, r.x+2, r.y+2, 12, 12) {
-		game.player.TakeDamage(game)
+	if common.Overlap(game.Player.x+4, game.Player.y+8, 8, 8, r.x+2, r.y+2, 12, 12) {
+		game.Player.TakeDamage(game)
 	}
 	r.currentAnimation = "idle"
 	if r.hurtTimer > 0 {
@@ -91,7 +91,7 @@ func (r *CrawlerEnemy) think(game *Game) {
 		tx, ty := int(r.x/common.TileSize)+1, int(r.y/common.TileSize)
 		game.debug.DrawBox(color.RGBA{R: 244, G: 12, B: 9, A: 244}, float64(tx*common.TileSize), float64(ty*common.TileSize), common.TileSize, common.TileSize)
 
-		td := game.level.tiledGrid.GetTileData(tx, ty)
+		td := game.Level.tiledGrid.GetTileData(tx, ty)
 		if td.Block || td.Damage || td.Platform {
 			r.directionX = r.directionX * -1
 			return
@@ -99,7 +99,7 @@ func (r *CrawlerEnemy) think(game *Game) {
 
 		// check tile below
 		tx, ty = int((r.x)/common.TileSize)+1, int((r.y/common.TileSize)+1)
-		td = game.level.tiledGrid.GetTileData(tx, ty)
+		td = game.Level.tiledGrid.GetTileData(tx, ty)
 		game.debug.DrawBox(color.RGBA{R: 120, G: 12, B: 44, A: 244}, float64(tx*common.TileSize), float64(ty*common.TileSize), common.TileSize, common.TileSize)
 		if td.Block || td.Platform {
 			r.targetX = float64(tx*common.TileSize) + float64(r.directionX*common.TileSize)
@@ -111,7 +111,7 @@ func (r *CrawlerEnemy) think(game *Game) {
 		tx, ty := int(r.x/common.TileSize), int(r.y/common.TileSize)
 		game.debug.DrawBox(color.RGBA{R: 244, G: 12, B: 9, A: 244}, float64(tx*common.TileSize), float64(ty*common.TileSize), common.TileSize, common.TileSize)
 
-		td := game.level.tiledGrid.GetTileData(tx, ty)
+		td := game.Level.tiledGrid.GetTileData(tx, ty)
 		if td.Block || td.Damage || td.Platform {
 			r.directionX = r.directionX * -1
 			return
@@ -119,7 +119,7 @@ func (r *CrawlerEnemy) think(game *Game) {
 
 		// check tile below
 		tx, ty = int((r.x)/common.TileSize), int((r.y/common.TileSize)+1)
-		td = game.level.tiledGrid.GetTileData(tx, ty)
+		td = game.Level.tiledGrid.GetTileData(tx, ty)
 		game.debug.DrawBox(color.RGBA{R: 120, G: 12, B: 44, A: 244}, float64(tx*common.TileSize), float64(ty*common.TileSize), common.TileSize, common.TileSize)
 		if td.Block || td.Platform {
 			r.targetX = float64(tx*common.TileSize) + float64(r.directionX*common.TileSize)
@@ -148,7 +148,7 @@ func (r *CrawlerEnemy) GetHurt(game *Game) {
 	r.animations["hurt"].Play()
 	if r.health == 0 {
 		game.SpawnEffect(effectCrawlerDeath, r.x-8, r.y-8, r.directionX > 0)
-		game.level.RemoveEnemy(r)
+		game.Level.RemoveEnemy(r)
 		// play effect
 	}
 }

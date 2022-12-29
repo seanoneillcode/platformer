@@ -50,7 +50,7 @@ func NewLevel(name string, game *Game) *Level {
 				y:     float64(object.Y),
 				w:     float64(object.W),
 				h:     float64(object.H),
-				image: game.images["flimsy"],
+				image: game.res.GetImage("flimsy"),
 			}
 			l.flimsy = append(l.flimsy, newFlimsy)
 		}
@@ -77,7 +77,7 @@ func NewLevel(name string, game *Game) *Level {
 			newPickup := &Pickup{
 				x:     float64(object.X),
 				y:     float64(object.Y),
-				image: game.images["health-pickup"],
+				image: game.res.GetImage("health-pickup"),
 			}
 			effect := &HealthEffect{
 				amount: 1,
@@ -94,7 +94,7 @@ func NewLevel(name string, game *Game) *Level {
 			newPickup := &Pickup{
 				x:     float64(object.X),
 				y:     float64(object.Y),
-				image: game.images["book-pickup"],
+				image: game.res.GetImage("book-pickup"),
 			}
 			effect := &BookEffect{
 				title: "untitled",
@@ -111,17 +111,17 @@ func NewLevel(name string, game *Game) *Level {
 			l.pickups = append(l.pickups, newPickup)
 		}
 	}
-	// validate level
+	// validate Level
 	if l.spawn == nil {
-		panic("no spawn for level: " + name)
+		panic("no spawn for Level: " + name)
 	}
 	return l
 }
 
 func (r *Level) Update(delta float64, game *Game) {
-	r.backgroundOffset = (game.camera.y / float64(r.tiledGrid.Layers[0].Height*common.TileSize)) * (60)
+	r.backgroundOffset = (game.Camera.y / float64(r.tiledGrid.Layers[0].Height*common.TileSize)) * (60)
 	if r.exit != nil {
-		if common.Overlap(game.player.x+8, game.player.y+4, game.player.sizex, game.player.sizey, r.exit.x, r.exit.y, common.TileSize, common.TileSize*2) {
+		if common.Overlap(game.Player.x+8, game.Player.y+4, game.Player.sizex, game.Player.sizey, r.exit.x, r.exit.y, common.TileSize, common.TileSize*2) {
 			game.MoveToNextLevel(r.exit.nextLevel)
 		}
 	}

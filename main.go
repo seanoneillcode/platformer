@@ -5,15 +5,14 @@ import (
 	"github.com/hajimehoshi/ebiten/v2"
 	"log"
 	"platformer/common"
-	"platformer/core"
 )
 
 func main() {
-	game := core.NewGame()
+	runner := NewRunner()
 
 	ebiten.SetWindowSize(common.ScreenWidth*common.Scale, common.ScreenHeight*common.Scale)
-	ebiten.SetWindowTitle("Pluto's Revenge")
-	err := ebiten.RunGame(game)
+	ebiten.SetWindowTitle("Platform Game")
+	err := ebiten.RunGame(runner)
 	if err != nil {
 		if errors.Is(err, common.NormalEscapeError) {
 			log.Println("exiting normally")

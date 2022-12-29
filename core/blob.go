@@ -31,28 +31,28 @@ func NewBlobEnemy(x float64, y float64, game *Game) *BlobEnemy {
 		currentAnimation: "run",
 		animations: map[string]*Animation{
 			"run": {
-				image:           game.images["blob-run"],
+				image:           game.res.GetImage("blob-run"),
 				numFrames:       2,
 				size:            32,
 				frameTimeAmount: 0.2,
 				isLoop:          true,
 			},
 			"idle": {
-				image:           game.images["blob-idle"],
+				image:           game.res.GetImage("blob-idle"),
 				numFrames:       1,
 				size:            32,
 				frameTimeAmount: 1,
 				isLoop:          true,
 			},
 			"hurt": {
-				image:           game.images["blob-hurt"],
+				image:           game.res.GetImage("blob-hurt"),
 				numFrames:       2,
 				size:            32,
 				frameTimeAmount: 0.1,
 				isLoop:          true,
 			},
 			"attack": {
-				image:           game.images["blob-attack"],
+				image:           game.res.GetImage("blob-attack"),
 				numFrames:       2,
 				size:            32,
 				frameTimeAmount: 0.5,
@@ -68,8 +68,8 @@ func NewBlobEnemy(x float64, y float64, game *Game) *BlobEnemy {
 
 func (r *BlobEnemy) Update(delta float64, game *Game) {
 	cb := r.GetCollisionBox()
-	if common.Overlap(game.player.x+4, game.player.y+8, 8, 8, cb.x, cb.y, cb.w, cb.h) {
-		game.player.TakeDamage(game)
+	if common.Overlap(game.Player.x+4, game.Player.y+8, 8, 8, cb.x, cb.y, cb.w, cb.h) {
+		game.Player.TakeDamage(game)
 	}
 	r.currentAnimation = "idle"
 	if r.hurtTimer > 0 {
@@ -101,7 +101,7 @@ func (r *BlobEnemy) think(game *Game) {
 		tx, ty := int((cb.x+cb.w)/common.TileSize), int(r.y/common.TileSize)
 		game.debug.DrawBox(color.RGBA{R: 244, G: 12, B: 9, A: 244}, float64(tx*common.TileSize), float64(ty*common.TileSize), common.TileSize, common.TileSize)
 
-		td := game.level.tiledGrid.GetTileData(tx, ty)
+		td := game.Level.tiledGrid.GetTileData(tx, ty)
 		if td.Block || td.Damage || td.Platform {
 			r.directionX = r.directionX * -1
 			return
@@ -110,7 +110,7 @@ func (r *BlobEnemy) think(game *Game) {
 		tx, ty = int((cb.x+cb.w)/common.TileSize), int(r.y/common.TileSize+1)
 		game.debug.DrawBox(color.RGBA{R: 244, G: 12, B: 9, A: 244}, float64(tx*common.TileSize), float64(ty*common.TileSize), common.TileSize, common.TileSize)
 
-		td = game.level.tiledGrid.GetTileData(tx, ty)
+		td = game.Level.tiledGrid.GetTileData(tx, ty)
 		if td.Block || td.Damage || td.Platform {
 			r.directionX = r.directionX * -1
 			return
@@ -118,7 +118,7 @@ func (r *BlobEnemy) think(game *Game) {
 
 		// check tile below
 		tx, ty = int((cb.x+cb.w)/common.TileSize), int((r.y/common.TileSize)+2)
-		td = game.level.tiledGrid.GetTileData(tx, ty)
+		td = game.Level.tiledGrid.GetTileData(tx, ty)
 		game.debug.DrawBox(color.RGBA{R: 120, G: 12, B: 44, A: 244}, float64(tx*common.TileSize), float64(ty*common.TileSize), common.TileSize, common.TileSize)
 		if td.Block || td.Platform {
 			r.targetX = float64(tx*common.TileSize) + float64(r.directionX*common.TileSize)
@@ -130,7 +130,7 @@ func (r *BlobEnemy) think(game *Game) {
 		tx, ty := int(cb.x/common.TileSize), int(r.y/common.TileSize)
 		game.debug.DrawBox(color.RGBA{R: 244, G: 12, B: 9, A: 244}, float64(tx*common.TileSize), float64(ty*common.TileSize), common.TileSize, common.TileSize)
 
-		td := game.level.tiledGrid.GetTileData(tx, ty)
+		td := game.Level.tiledGrid.GetTileData(tx, ty)
 		if td.Block || td.Damage || td.Platform {
 			r.directionX = r.directionX * -1
 			return
@@ -139,7 +139,7 @@ func (r *BlobEnemy) think(game *Game) {
 		tx, ty = int(cb.x/common.TileSize), int(r.y/common.TileSize)+1
 		game.debug.DrawBox(color.RGBA{R: 244, G: 12, B: 9, A: 244}, float64(tx*common.TileSize), float64(ty*common.TileSize), common.TileSize, common.TileSize)
 
-		td = game.level.tiledGrid.GetTileData(tx, ty)
+		td = game.Level.tiledGrid.GetTileData(tx, ty)
 		if td.Block || td.Damage || td.Platform {
 			r.directionX = r.directionX * -1
 			return
@@ -147,7 +147,7 @@ func (r *BlobEnemy) think(game *Game) {
 
 		// check tile below
 		tx, ty = int((cb.x)/common.TileSize), int((r.y/common.TileSize)+2)
-		td = game.level.tiledGrid.GetTileData(tx, ty)
+		td = game.Level.tiledGrid.GetTileData(tx, ty)
 		game.debug.DrawBox(color.RGBA{R: 120, G: 12, B: 44, A: 244}, float64(tx*common.TileSize), float64(ty*common.TileSize), common.TileSize, common.TileSize)
 		if td.Block || td.Platform {
 			r.targetX = float64(tx*common.TileSize) + float64(r.directionX*common.TileSize)
@@ -176,7 +176,7 @@ func (r *BlobEnemy) GetHurt(game *Game) {
 	r.animations["hurt"].Play()
 	if r.health == 0 {
 		game.SpawnEffect(effectBlobDeath, r.x, r.y, r.directionX > 0)
-		game.level.RemoveEnemy(r)
+		game.Level.RemoveEnemy(r)
 		// play effect
 	}
 }

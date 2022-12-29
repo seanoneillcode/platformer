@@ -15,9 +15,9 @@ type Pickup struct {
 }
 
 func (r *Pickup) Update(delta float64, game *Game) {
-	if common.Overlap(game.player.x+4, game.player.y+8, 8, 8, r.x+2, r.y+2, 12, 12) {
+	if common.Overlap(game.Player.x+4, game.Player.y+8, 8, 8, r.x+2, r.y+2, 12, 12) {
 		r.effect.GetPickedUp(game)
-		game.level.RemovePickup(r)
+		game.Level.RemovePickup(r)
 	}
 }
 
@@ -37,8 +37,8 @@ type HealthEffect struct {
 }
 
 func (r *HealthEffect) GetPickedUp(game *Game) {
-	if game.player.health < game.player.maxHealth {
-		game.player.AddHealth(1)
+	if game.Player.Health < game.Player.MaxHealth {
+		game.Player.AddHealth(1)
 	}
 }
 
@@ -49,5 +49,5 @@ type BookEffect struct {
 
 func (r *BookEffect) GetPickedUp(game *Game) {
 	fmt.Println("picked up the book called: ", r.title)
-	game.player.AddSpell(r.spell)
+	game.Player.AddSpell(r.spell)
 }
