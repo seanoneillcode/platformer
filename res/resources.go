@@ -37,6 +37,8 @@ func NewResources() *Resources {
 			"health-bar-background": common.LoadImage("health-bar-background.png"),
 			"health-bar-end":        common.LoadImage("health-bar-end.png"),
 			"flimsy":                common.LoadImage("flimsy.png"),
+			"book-page":             common.LoadImage("book-page.png"),
+			"book-cover":            common.LoadImage("book-cover.png"),
 		},
 	}
 }

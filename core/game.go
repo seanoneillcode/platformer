@@ -2,12 +2,12 @@ package core
 
 import (
 	"github.com/hajimehoshi/ebiten/v2"
-	"github.com/hajimehoshi/ebiten/v2/inpututil"
-	"platformer/common"
+	"platformer/actions"
 	"platformer/res"
 )
 
 type Game struct {
+	Enabled       bool
 	Player        *Player
 	Camera        *Camera
 	Level         *Level
@@ -15,19 +15,25 @@ type Game struct {
 	spellObjects  []*SpellObject
 	effectSprites []*EffectSprite
 	// refs
-	res *res.Resources
+	res     *res.Resources
+	Actions actions.Actions
 }
 
-func NewGame(resources *res.Resources) *Game {
+func NewGame(resources *res.Resources, actions actions.Actions) *Game {
 	r := &Game{
-		debug: NewDebug(),
-		res:   resources,
+		debug:   NewDebug(),
+		res:     resources,
+		Enabled: true,
+		Actions: actions,
 	}
 	r.LoadLevel("level-alpha")
 	return r
 }
 
 func (r *Game) Update(delta float64) error {
+	if !r.Enabled {
+		return nil
+	}
 	r.debug.Update(delta, r)
 	r.Player.Update(delta, r)
 	r.Level.Update(delta, r)
@@ -37,13 +43,6 @@ func (r *Game) Update(delta float64) error {
 	}
 	for _, e := range r.effectSprites {
 		e.Update(delta, r)
-	}
-
-	if inpututil.IsKeyJustPressed(ebiten.KeyF) {
-		ebiten.SetFullscreen(!ebiten.IsFullscreen())
-	}
-	if inpututil.IsKeyJustPressed(ebiten.KeyEscape) {
-		return common.NormalEscapeError
 	}
 
 	return nil

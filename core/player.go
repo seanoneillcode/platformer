@@ -180,6 +180,9 @@ func (r *Player) Update(delta float64, game *Game) {
 				}
 				shouldUpdateAnimation = true
 			}
+			if inpututil.IsKeyJustPressed(ebiten.KeyC) {
+				game.Actions.OpenBook("my title", "My friend,\n\n\nI have fallen and can't get\n up.\n\nCan you help me?")
+			}
 			if ebiten.IsKeyPressed(ebiten.KeyArrowRight) {
 				r.targetVelocityX = maxRunVelocity
 				r.isFlip = false

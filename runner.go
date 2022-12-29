@@ -2,6 +2,7 @@ package main
 
 import (
 	"github.com/hajimehoshi/ebiten/v2"
+	"github.com/hajimehoshi/ebiten/v2/inpututil"
 	"platformer/common"
 	"platformer/core"
 	"platformer/gui"
@@ -21,12 +22,13 @@ type Runner struct {
 
 func NewRunner() *Runner {
 	resources := res.NewResources()
-	return &Runner{
+	r := &Runner{
 		firstUpdate:   true,
 		res:           resources,
-		game:          core.NewGame(resources),
 		userInterface: gui.NewUserInterface(resources),
 	}
+	r.game = core.NewGame(resources, r)
+	return r
 }
 
 func (r *Runner) Update() error {
@@ -51,6 +53,13 @@ func (r *Runner) Update() error {
 		return err
 	}
 
+	if inpututil.IsKeyJustPressed(ebiten.KeyEscape) {
+		return common.NormalEscapeError
+	}
+	if inpututil.IsKeyJustPressed(ebiten.KeyF) {
+		ebiten.SetFullscreen(!ebiten.IsFullscreen())
+	}
+
 	return nil
 }
 
@@ -61,4 +70,15 @@ func (r *Runner) Draw(screen *ebiten.Image) {
 
 func (r *Runner) Layout(outsideWidth, outsideHeight int) (int, int) {
 	return common.ScreenWidth * common.Scale, common.ScreenHeight * common.Scale
+}
+
+func (r *Runner) CloseBook() {
+	r.game.Enabled = true
+	r.userInterface.Enabled = false
+}
+
+func (r *Runner) OpenBook(title, text string) {
+	r.game.Enabled = false
+	r.userInterface.Enabled = true
+	r.userInterface.Book.Open(title, text)
 }
