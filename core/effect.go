@@ -10,10 +10,11 @@ type EffectSprite struct {
 	y           float64
 	w           float64
 	h           float64
+	rot         float64
 	animation   *Animation
 	ttl         float64
 	isTemporary bool
-	isFlip      bool
+	isFlipX     bool
 }
 
 func (r *EffectSprite) Update(delta float64, game *Game) {
@@ -28,7 +29,13 @@ func (r *EffectSprite) Update(delta float64, game *Game) {
 
 func (r *EffectSprite) Draw(camera common.Camera) {
 	op := &ebiten.DrawImageOptions{}
-	if r.isFlip {
+	if r.rot != 0 {
+		offset := r.w / 2
+		op.GeoM.Translate(-offset, -offset)
+		op.GeoM.Rotate(r.rot)
+		op.GeoM.Translate(offset, offset)
+	}
+	if r.isFlipX {
 		op.GeoM.Scale(-1, 1)
 		op.GeoM.Translate(r.w, 0)
 	}

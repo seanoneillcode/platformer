@@ -461,6 +461,13 @@ func (r *Player) Update(delta float64, game *Game) {
 						moveY = spellBulletSpeed
 						posY = r.y + 16
 					}
+					ey := r.y - 12
+					rot := -ninetyDegreesInRads
+					if aimY == 1 {
+						ey = r.y + 24
+						rot = ninetyDegreesInRads
+					}
+					game.SpawnEffect(effectCastSpell, r.x, ey, r.isFlip, rot)
 				} else {
 					moveX = spellBulletSpeed
 					posX = r.x + 8
@@ -472,9 +479,15 @@ func (r *Player) Update(delta float64, game *Game) {
 					if r.isCrouch {
 						posY = r.y + 6
 					}
+					ex := r.x + 12
+					if r.isFlip {
+						ex = r.x - 12
+					}
+					game.SpawnEffect(effectCastSpell, ex, r.y, r.isFlip, 0)
 				}
 				spellObj := NewSpellObject(game, posX, posY, moveX, moveY)
 				game.AddSpellObject(spellObj)
+
 			}
 		}
 	}

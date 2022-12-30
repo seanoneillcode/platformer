@@ -175,7 +175,7 @@ func (r *BlobEnemy) GetHurt(game *Game) {
 	r.hurtTimer = r.hurtAmountTime
 	r.animations["hurt"].Play()
 	if r.health == 0 {
-		game.SpawnEffect(effectBlobDeath, r.x, r.y, r.directionX > 0)
+		game.SpawnEffect(effectBlobDeath, r.x, r.y, r.directionX > 0, 0)
 		game.Level.RemoveEnemy(r)
 		// play effect
 	}

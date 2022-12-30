@@ -37,6 +37,7 @@ func NewResources() *Resources {
 			"blob-attack":           common.LoadImage("blob-attack.png"),
 			"spell-bullet":          common.LoadImage("spell-bullet.png"),
 			"effect-spell-hit":      common.LoadImage("effect-spell-hit.png"),
+			"effect-cast-spell":     common.LoadImage("cast-effect.png"),
 			"health-bar":            common.LoadImage("health-bar.png"),
 			"health-bar-background": common.LoadImage("health-bar-background.png"),
 			"health-bar-end":        common.LoadImage("health-bar-end.png"),

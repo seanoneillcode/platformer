@@ -49,7 +49,7 @@ func (r *SpellObject) Update(delta float64, game *Game) {
 	r.ttl = r.ttl - delta
 	if r.ttl < 0 {
 		game.RemoveSpellObject(r)
-		game.SpawnEffect(effectSpellHit, r.x, r.y, r.moveX < 0)
+		game.SpawnEffect(effectSpellHit, r.x, r.y, r.moveX < 0, 0)
 		return
 	}
 	// check for collision with Level, enemies, Player etc
@@ -57,7 +57,7 @@ func (r *SpellObject) Update(delta float64, game *Game) {
 	td := game.Level.tiledGrid.GetTileData(tx, ty)
 	if td.Block {
 		game.RemoveSpellObject(r)
-		game.SpawnEffect(effectSpellHit, r.x, r.y, r.moveX < 0)
+		game.SpawnEffect(effectSpellHit, r.x, r.y, r.moveX < 0, 0)
 		return
 	}
 
@@ -66,7 +66,7 @@ func (r *SpellObject) Update(delta float64, game *Game) {
 		if common.Overlap(r.x+6, r.y+6, 4, 4, cb.x, cb.y, cb.w, cb.h) {
 			e.GetHurt(game)
 			game.RemoveSpellObject(r)
-			game.SpawnEffect(effectSpellHit, r.x, r.y, r.moveX < 0)
+			game.SpawnEffect(effectSpellHit, r.x, r.y, r.moveX < 0, 0)
 			return
 		}
 	}
@@ -76,7 +76,7 @@ func (r *SpellObject) Update(delta float64, game *Game) {
 		if common.Overlap(r.x+6, r.y+6, 4, 4, cb.x, cb.y, cb.w, cb.h) {
 			game.Level.RemoveFlimsy(f)
 			game.RemoveSpellObject(r)
-			game.SpawnEffect(effectSpellHit, r.x, r.y, r.moveX < 0)
+			game.SpawnEffect(effectSpellHit, r.x, r.y, r.moveX < 0, 0)
 			return
 		}
 	}

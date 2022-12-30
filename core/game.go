@@ -91,11 +91,12 @@ func (r *Game) AddEffectSprite(effectSprite *EffectSprite) {
 
 const (
 	effectSpellHit     = "effect-spell-hit"
+	effectCastSpell    = "effect-cast-spell"
 	effectCrawlerDeath = "effect-crawler-death"
 	effectBlobDeath    = "effect-blob-death"
 )
 
-func (r *Game) SpawnEffect(name string, x, y float64, isFlip bool) {
+func (r *Game) SpawnEffect(name string, x, y float64, isFlip bool, rot float64) {
 	switch name {
 	case effectCrawlerDeath:
 		r.AddEffectSprite(&EffectSprite{
@@ -110,7 +111,7 @@ func (r *Game) SpawnEffect(name string, x, y float64, isFlip bool) {
 				frameTimeAmount: 0.2,
 				isLoop:          false,
 			},
-			isFlip: isFlip,
+			isFlipX: isFlip,
 		})
 	case effectBlobDeath:
 		r.AddEffectSprite(&EffectSprite{
@@ -125,7 +126,7 @@ func (r *Game) SpawnEffect(name string, x, y float64, isFlip bool) {
 				frameTimeAmount: 0.1,
 				isLoop:          false,
 			},
-			isFlip: isFlip,
+			isFlipX: isFlip,
 		})
 	case effectSpellHit:
 		r.AddEffectSprite(&EffectSprite{
@@ -142,7 +143,25 @@ func (r *Game) SpawnEffect(name string, x, y float64, isFlip bool) {
 			},
 			isTemporary: true,
 			ttl:         0.4,
-			isFlip:      isFlip,
+			isFlipX:     isFlip,
+		})
+	case effectCastSpell:
+		r.AddEffectSprite(&EffectSprite{
+			x:   x - 4,
+			y:   y - 4,
+			w:   24,
+			h:   24,
+			rot: rot,
+			animation: &Animation{
+				image:           r.res.GetImage("effect-cast-spell"),
+				numFrames:       9,
+				size:            24,
+				frameTimeAmount: 0.05,
+				isLoop:          false,
+			},
+			isTemporary: true,
+			ttl:         0.5,
+			isFlipX:     isFlip,
 		})
 
 	}
