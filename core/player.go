@@ -27,6 +27,7 @@ const takeDamageTime = 0.3
 const postDamageTime = 0.6
 const playerDeathTime = 2.0
 const castSpellCoolDownTime = 0.2
+const castSpellTimeTotal = 0.3
 
 type Player struct {
 	x                  float64
@@ -67,6 +68,7 @@ type Player struct {
 	isCrouch           bool
 	currentSpell       string
 	spells             map[string]bool
+	castTimer          float64
 }
 
 func NewPlayer(game *Game) *Player {
@@ -93,6 +95,13 @@ func NewPlayer(game *Game) *Player {
 				frameTimeAmount: 0.1,
 				isLoop:          true,
 			},
+			"run-cast": {
+				image:           game.res.GetImage("player-run-cast"),
+				numFrames:       6,
+				size:            32,
+				frameTimeAmount: 0.1,
+				isLoop:          true,
+			},
 			"idle": {
 				image:           game.res.GetImage("player-idle"),
 				numFrames:       1,
@@ -114,6 +123,13 @@ func NewPlayer(game *Game) *Player {
 				frameTimeAmount: 1,
 				isLoop:          true,
 			},
+			"jump-cast": {
+				image:           game.res.GetImage("player-jump-cast"),
+				numFrames:       1,
+				size:            32,
+				frameTimeAmount: 1,
+				isLoop:          true,
+			},
 			"death": {
 				image:           game.res.GetImage("player-death"),
 				numFrames:       3,
@@ -123,6 +139,13 @@ func NewPlayer(game *Game) *Player {
 			},
 			"fall": {
 				image:           game.res.GetImage("player-fall"),
+				numFrames:       1,
+				size:            32,
+				frameTimeAmount: 1,
+				isLoop:          true,
+			},
+			"fall-cast": {
+				image:           game.res.GetImage("player-fall-cast"),
 				numFrames:       1,
 				size:            32,
 				frameTimeAmount: 1,
@@ -141,6 +164,13 @@ func NewPlayer(game *Game) *Player {
 				size:            32,
 				frameTimeAmount: 1,
 				isLoop:          true,
+			},
+			"cast": {
+				image:           game.res.GetImage("player-cast"),
+				numFrames:       3,
+				size:            32,
+				frameTimeAmount: 0.1,
+				isLoop:          false,
 			},
 		},
 		velocityY:       0,
@@ -181,7 +211,7 @@ func (r *Player) Update(delta float64, game *Game) {
 				shouldUpdateAnimation = true
 			}
 			if inpututil.IsKeyJustPressed(ebiten.KeyC) {
-				game.Actions.OpenBook("my title", "My friend,\n\n\nI have fallen and can't get\n up.\n\nCan you help me?")
+				game.Actions.OpenBook("my title", "My friend,\n\n\nI have fallen and can't get up.\n\nCan you help me?\n\nI can write a PROPER sentence now, full of lore and \nsuspense.")
 			}
 			if ebiten.IsKeyPressed(ebiten.KeyArrowRight) {
 				r.targetVelocityX = maxRunVelocity
@@ -368,6 +398,23 @@ func (r *Player) Update(delta float64, game *Game) {
 				r.velocityX = r.targetVelocityX
 			}
 		}
+		if r.castTimer > 0 {
+			r.castTimer = r.castTimer - delta
+			switch r.currentAnimation {
+			case "run":
+				r.currentAnimation = "run-cast"
+				r.animations["run"].Update(delta)
+				shouldUpdateAnimation = true
+			case "jump":
+				r.currentAnimation = "jump-cast"
+			case "fall":
+				r.currentAnimation = "fall-cast"
+			default:
+				shouldUpdateAnimation = true
+				r.currentAnimation = "cast"
+			}
+
+		}
 		if hitDamage {
 			game.Player.TakeDamage(game)
 		}
@@ -396,6 +443,9 @@ func (r *Player) Update(delta float64, game *Game) {
 			switch r.currentSpell {
 			case "spell-bullet":
 				r.castSpellTimer = castSpellCoolDownTime
+				r.castTimer = castSpellTimeTotal
+				r.animations["cast"].Reset()
+				r.animations["run-cast"].SnapToAnimation(r.animations["run"])
 
 				var moveX float64
 				var moveY float64

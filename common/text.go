@@ -121,8 +121,9 @@ func drawText(screen *ebiten.Image, str string, ox, oy int) {
 		}
 		if s != nil {
 			op := &ebiten.DrawImageOptions{}
-			op.GeoM.Translate(float64(ox+x), float64(oy+y))
-			op.GeoM.Scale(Scale, Scale)
+			op.GeoM.Translate(float64(ox*2), float64(oy*2))
+			op.GeoM.Translate(float64(x), float64(y))
+			op.GeoM.Scale(TextScale, TextScale)
 			screen.DrawImage(s, op)
 			x += ci.width + 1
 		}

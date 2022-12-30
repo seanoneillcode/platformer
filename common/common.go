@@ -15,6 +15,7 @@ const (
 	ScreenWidth  = 240
 	ScreenHeight = 180
 	Scale        = 4
+	TextScale    = 2
 	TileSize     = 16.0
 )
 

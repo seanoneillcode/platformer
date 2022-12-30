@@ -42,6 +42,18 @@ func (r *Animation) Play() {
 	r.isDone = false
 }
 
+func (r *Animation) Reset() {
+	r.timer = 0
+	r.frame = 0
+	r.isDone = false
+}
+
+func (r *Animation) SnapToAnimation(other *Animation) {
+	r.timer = other.timer
+	r.frame = other.frame
+	r.isDone = other.isDone
+}
+
 func (r *Animation) GetCurrentFrame() *ebiten.Image {
 	return r.image.SubImage(image.Rect(r.frame*r.size, 0, (r.frame+1)*r.size, r.size)).(*ebiten.Image)
 }
