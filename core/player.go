@@ -470,18 +470,24 @@ func (r *Player) Update(delta float64, game *Game) {
 					game.SpawnEffect(effectCastSpell, r.x, ey, r.isFlip, rot)
 				} else {
 					moveX = spellBulletSpeed
+
 					posX = r.x + 8
 					if r.isFlip {
 						moveX = moveX * -1
 						posX = r.x - 8
 					}
+
 					posY = r.y - 2
 					if r.isCrouch {
 						posY = r.y + 6
 					}
-					ex := r.x + 12
+					offsetAmount := 12.0
+					if r.targetVelocityX != 0 {
+						offsetAmount = 24
+					}
+					ex := r.x + offsetAmount
 					if r.isFlip {
-						ex = r.x - 12
+						ex = r.x - offsetAmount
 					}
 					game.SpawnEffect(effectCastSpell, ex, r.y, r.isFlip, 0)
 				}
