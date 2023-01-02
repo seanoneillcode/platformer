@@ -7,6 +7,11 @@ import (
 	"platformer/common"
 )
 
+const (
+	thinkStateIdle   = "idle"
+	thinkStateTarget = "target"
+)
+
 type BlobEnemy struct {
 	x                float64
 	y                float64
@@ -15,12 +20,18 @@ type BlobEnemy struct {
 	animations       map[string]*Animation
 	health           int
 	// ai
-	directionX     int
-	targetX        float64
-	targetY        float64
-	moveSpeed      float64
-	hurtTimer      float64
-	hurtAmountTime float64
+	directionX       int
+	targetX          float64
+	targetY          float64
+	moveSpeed        float64
+	hurtTimer        float64
+	hurtAmountTime   float64
+	thinkState       string
+	lastKnownPlayerX float64
+	tryJumpTimer     float64
+	velocityY        float64
+	jumpTimer        float64
+	touchingGround   bool
 }
 
 func NewBlobEnemy(x float64, y float64, game *Game) *BlobEnemy {
@@ -63,6 +74,7 @@ func NewBlobEnemy(x float64, y float64, game *Game) *BlobEnemy {
 		directionX:     1,
 		moveSpeed:      32,
 		hurtAmountTime: 0.4,
+		thinkState:     thinkStateIdle,
 	}
 }
 
@@ -71,90 +83,127 @@ func (r *BlobEnemy) Update(delta float64, game *Game) {
 	if common.Overlap(game.Player.x+4, game.Player.y+8, 8, 8, cb.x, cb.y, cb.w, cb.h) {
 		game.Player.TakeDamage(game)
 	}
-	r.currentAnimation = "idle"
 	if r.hurtTimer > 0 {
 		r.currentAnimation = "hurt"
 		r.hurtTimer = r.hurtTimer - delta
 	} else {
-		if math.Abs(r.x-r.targetX) < (r.moveSpeed * delta) {
-			r.x = r.targetX
-			r.currentAnimation = "run"
-		}
-		if r.x < r.targetX {
-			r.x = r.x + (r.moveSpeed * delta)
-			r.currentAnimation = "run"
-		}
-		if r.x > r.targetX {
-			r.x = r.x - (r.moveSpeed * delta)
-			r.currentAnimation = "run"
-		}
+		r.think(game)
+		r.move(delta, game)
 	}
 	r.animations[r.currentAnimation].Update(delta)
-	// thinking
-	r.think(game)
 }
 
-func (r *BlobEnemy) think(game *Game) {
+const blobJumpHeight = 2.0 * common.TileSize
+const blobJumpTime = 0.5
+const timeBetweenJumps = 2.0
+
+func (r *BlobEnemy) move(delta float64, game *Game) {
+	moveX := 0.0
+
+	gravity := (blobJumpHeight * -2) / (blobJumpTime * blobJumpTime)
+
+	moveY := (r.velocityY * delta) + (0.5 * gravity * delta * delta)
+	r.velocityY = r.velocityY + (gravity * delta)
+
+	if math.Abs(r.x-r.targetX) < (r.moveSpeed * delta) {
+		r.x = r.targetX
+		r.currentAnimation = "idle"
+	}
+	if r.x < r.targetX {
+		moveX = r.moveSpeed * delta
+		r.currentAnimation = "run"
+	}
+	if r.x > r.targetX {
+		moveX = -(r.moveSpeed * delta)
+		r.currentAnimation = "run"
+	}
+
+	// alter movement after checking or collision
 	cb := r.GetCollisionBox()
-	if r.directionX > 0 {
+	newX := cb.x + moveX
+	oldX := cb.x
+	//if moveX > 0 {
+	//	newX = cb.x + cb.w + moveX
+	//	oldX = cb.x + cb.w
+	//}
 
-		tx, ty := int((cb.x+cb.w)/common.TileSize), int(r.y/common.TileSize)
-		game.debug.DrawBox(color.RGBA{R: 244, G: 12, B: 9, A: 244}, float64(tx*common.TileSize), float64(ty*common.TileSize), common.TileSize, common.TileSize)
+	oldY := cb.y + cb.h
+	newY := cb.y - moveY + cb.h
 
-		td := game.Level.tiledGrid.GetTileData(tx, ty)
-		if td.Block || td.Damage || td.Platform {
-			r.directionX = r.directionX * -1
-			return
+	tx, ty := int((newX)/common.TileSize), int(oldX/common.TileSize)
+	game.debug.DrawBox(color.RGBA{R: 244, G: 12, B: 9, A: 244}, float64(tx*common.TileSize), float64(ty*common.TileSize), common.TileSize, common.TileSize)
+	td := game.Level.tiledGrid.GetTileData(tx, ty)
+	if td.Block || td.Damage || td.Platform {
+		newX = oldX
+	}
+
+	tx, ty = int((newX)/common.TileSize), int(newY/common.TileSize)
+	game.debug.DrawBox(color.RGBA{R: 244, G: 12, B: 9, A: 244}, float64(tx*common.TileSize), float64(ty*common.TileSize), common.TileSize, common.TileSize)
+	td = game.Level.tiledGrid.GetTileData(tx, ty)
+	if td.Block || td.Damage || td.Platform {
+		newX = oldX
+	}
+
+	// y movement collision
+	r.touchingGround = false
+
+	tx, ty = int((oldX)/common.TileSize), int(newY/common.TileSize)
+	game.debug.DrawBox(color.RGBA{R: 244, G: 12, B: 9, A: 244}, float64(tx*common.TileSize), float64(ty*common.TileSize), common.TileSize, common.TileSize)
+	td = game.Level.tiledGrid.GetTileData(tx, ty)
+	if td.Block || td.Damage || td.Platform {
+		newY = oldY
+		r.velocityY = 0
+		r.touchingGround = true
+	}
+	//tx, ty = int((newX)/common.TileSize), int(newY/common.TileSize)
+	//game.debug.DrawBox(color.RGBA{R: 244, G: 12, B: 9, A: 244}, float64(tx*common.TileSize), float64(ty*common.TileSize), common.TileSize, common.TileSize)
+	//td = game.Level.tiledGrid.GetTileData(tx, ty)
+	//if td.Block || td.Damage || td.Platform {
+	//	newY = oldY
+	//	r.velocityY = 0
+	//	touchingGround = true
+	//}
+
+	r.tryJumpTimer = r.tryJumpTimer + delta
+	if r.touchingGround && r.tryJumpTimer > timeBetweenJumps {
+		r.tryJumpTimer = 0
+		r.velocityY = (2 * blobJumpHeight) / blobJumpTime
+	}
+
+	r.x = newX - 8
+	r.y = newY - 8 - cb.h
+}
+
+const (
+	blobViewDistance = common.TileSize * 6
+)
+
+func (r *BlobEnemy) think(game *Game) {
+	canSeePlayer := false
+	if r.x < game.Player.x+blobViewDistance && r.x > game.Player.x-blobViewDistance {
+		if r.y < game.Player.y+blobViewDistance && r.y > game.Player.y-blobViewDistance {
+			canSeePlayer = true
+			r.lastKnownPlayerX = game.Player.x
 		}
-
-		tx, ty = int((cb.x+cb.w)/common.TileSize), int(r.y/common.TileSize+1)
-		game.debug.DrawBox(color.RGBA{R: 244, G: 12, B: 9, A: 244}, float64(tx*common.TileSize), float64(ty*common.TileSize), common.TileSize, common.TileSize)
-
-		td = game.Level.tiledGrid.GetTileData(tx, ty)
-		if td.Block || td.Damage || td.Platform {
-			r.directionX = r.directionX * -1
-			return
+	}
+	atTarget := false
+	if r.targetX == r.x {
+		atTarget = true
+	}
+	switch r.thinkState {
+	case thinkStateIdle:
+		r.targetX = r.x
+		r.targetY = r.y
+		if canSeePlayer {
+			r.thinkState = thinkStateTarget
 		}
-
-		// check tile below
-		tx, ty = int((cb.x+cb.w)/common.TileSize), int((r.y/common.TileSize)+2)
-		td = game.Level.tiledGrid.GetTileData(tx, ty)
-		game.debug.DrawBox(color.RGBA{R: 120, G: 12, B: 44, A: 244}, float64(tx*common.TileSize), float64(ty*common.TileSize), common.TileSize, common.TileSize)
-		if td.Block || td.Platform {
-			r.targetX = float64(tx*common.TileSize) + float64(r.directionX*common.TileSize)
-			return
+	case thinkStateTarget:
+		if r.touchingGround {
+			r.targetX = r.lastKnownPlayerX
 		}
-
-		r.directionX = r.directionX * -1
-	} else {
-		tx, ty := int(cb.x/common.TileSize), int(r.y/common.TileSize)
-		game.debug.DrawBox(color.RGBA{R: 244, G: 12, B: 9, A: 244}, float64(tx*common.TileSize), float64(ty*common.TileSize), common.TileSize, common.TileSize)
-
-		td := game.Level.tiledGrid.GetTileData(tx, ty)
-		if td.Block || td.Damage || td.Platform {
-			r.directionX = r.directionX * -1
-			return
+		if !canSeePlayer && atTarget {
+			r.thinkState = thinkStateIdle
 		}
-
-		tx, ty = int(cb.x/common.TileSize), int(r.y/common.TileSize)+1
-		game.debug.DrawBox(color.RGBA{R: 244, G: 12, B: 9, A: 244}, float64(tx*common.TileSize), float64(ty*common.TileSize), common.TileSize, common.TileSize)
-
-		td = game.Level.tiledGrid.GetTileData(tx, ty)
-		if td.Block || td.Damage || td.Platform {
-			r.directionX = r.directionX * -1
-			return
-		}
-
-		// check tile below
-		tx, ty = int((cb.x)/common.TileSize), int((r.y/common.TileSize)+2)
-		td = game.Level.tiledGrid.GetTileData(tx, ty)
-		game.debug.DrawBox(color.RGBA{R: 120, G: 12, B: 44, A: 244}, float64(tx*common.TileSize), float64(ty*common.TileSize), common.TileSize, common.TileSize)
-		if td.Block || td.Platform {
-			r.targetX = float64(tx*common.TileSize) + float64(r.directionX*common.TileSize)
-			return
-		}
-
-		r.directionX = r.directionX * -1
 	}
 }
 

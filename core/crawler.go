@@ -88,47 +88,33 @@ func (r *CrawlerEnemy) Update(delta float64, game *Game) {
 }
 
 func (r *CrawlerEnemy) think(game *Game) {
+
+	cb := r.GetCollisionBox()
+
+	posX := cb.x
 	if r.directionX > 0 {
-		tx, ty := int(r.x/common.TileSize)+1, int(r.y/common.TileSize)
-		game.debug.DrawBox(color.RGBA{R: 244, G: 12, B: 9, A: 244}, float64(tx*common.TileSize), float64(ty*common.TileSize), common.TileSize, common.TileSize)
-
-		td := game.Level.tiledGrid.GetTileData(tx, ty)
-		if td.Block || td.Damage || td.Platform {
-			r.directionX = r.directionX * -1
-			return
-		}
-
-		// check tile below
-		tx, ty = int((r.x)/common.TileSize)+1, int((r.y/common.TileSize)+1)
-		td = game.Level.tiledGrid.GetTileData(tx, ty)
-		game.debug.DrawBox(color.RGBA{R: 120, G: 12, B: 44, A: 244}, float64(tx*common.TileSize), float64(ty*common.TileSize), common.TileSize, common.TileSize)
-		if td.Block || td.Platform {
-			r.targetX = float64(tx*common.TileSize) + float64(r.directionX*common.TileSize)
-			return
-		}
-
-		r.directionX = r.directionX * -1
-	} else {
-		tx, ty := int(r.x/common.TileSize), int(r.y/common.TileSize)
-		game.debug.DrawBox(color.RGBA{R: 244, G: 12, B: 9, A: 244}, float64(tx*common.TileSize), float64(ty*common.TileSize), common.TileSize, common.TileSize)
-
-		td := game.Level.tiledGrid.GetTileData(tx, ty)
-		if td.Block || td.Damage || td.Platform {
-			r.directionX = r.directionX * -1
-			return
-		}
-
-		// check tile below
-		tx, ty = int((r.x)/common.TileSize), int((r.y/common.TileSize)+1)
-		td = game.Level.tiledGrid.GetTileData(tx, ty)
-		game.debug.DrawBox(color.RGBA{R: 120, G: 12, B: 44, A: 244}, float64(tx*common.TileSize), float64(ty*common.TileSize), common.TileSize, common.TileSize)
-		if td.Block || td.Platform {
-			r.targetX = float64(tx*common.TileSize) + float64(r.directionX*common.TileSize)
-			return
-		}
-
-		r.directionX = r.directionX * -1
+		posX = cb.x + cb.w
 	}
+
+	tx, ty := int((posX)/common.TileSize), int(r.y/common.TileSize)
+	game.debug.DrawBox(color.RGBA{R: 244, G: 12, B: 9, A: 244}, float64(tx*common.TileSize), float64(ty*common.TileSize), common.TileSize, common.TileSize)
+
+	td := game.Level.tiledGrid.GetTileData(tx, ty)
+	if td.Block || td.Damage || td.Platform {
+		r.directionX = r.directionX * -1
+		return
+	}
+
+	// check tile below
+	tx, ty = int((posX)/common.TileSize), int((r.y/common.TileSize)+1)
+	td = game.Level.tiledGrid.GetTileData(tx, ty)
+	game.debug.DrawBox(color.RGBA{R: 120, G: 12, B: 44, A: 244}, float64(tx*common.TileSize), float64(ty*common.TileSize), common.TileSize, common.TileSize)
+	if td.Block || td.Platform {
+		r.targetX = float64(tx*common.TileSize) + float64(r.directionX*common.TileSize)
+		return
+	}
+
+	r.directionX = r.directionX * -1
 }
 
 func (r *CrawlerEnemy) Draw(camera common.Camera) {
