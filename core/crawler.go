@@ -62,6 +62,7 @@ func NewCrawlerEnemy(x float64, y float64, game *Game) *CrawlerEnemy {
 func (r *CrawlerEnemy) Update(delta float64, game *Game) {
 	if common.Overlap(game.Player.x+4, game.Player.y+8, 8, 8, r.x+2, r.y+2, 12, 12) {
 		game.Player.TakeDamage(game)
+		r.GetHurt(game)
 	}
 	r.currentAnimation = "idle"
 	if r.hurtTimer > 0 {
@@ -146,6 +147,7 @@ func (r *CrawlerEnemy) GetHurt(game *Game) {
 	r.health = r.health - 1
 	r.hurtTimer = hurtAmountTime
 	r.animations["hurt"].Play()
+	game.SpawnEffect(effectCrawlerSpray, r.x-8, r.y-8, r.directionX > 0, 0)
 	if r.health == 0 {
 		game.SpawnEffect(effectCrawlerDeath, r.x-8, r.y-8, r.directionX > 0, 0)
 		game.Level.RemoveEnemy(r)

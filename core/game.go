@@ -93,6 +93,7 @@ const (
 	effectSpellHit     = "effect-spell-hit"
 	effectCastSpell    = "effect-cast-spell"
 	effectCrawlerDeath = "effect-crawler-death"
+	effectCrawlerSpray = "effect-crawler-spray"
 	effectBlobDeath    = "effect-blob-death"
 )
 
@@ -112,6 +113,23 @@ func (r *Game) SpawnEffect(name string, x, y float64, isFlip bool, rot float64) 
 				isLoop:          false,
 			},
 			isFlipX: isFlip,
+		})
+	case effectCrawlerSpray:
+		r.AddEffectSprite(&EffectSprite{
+			x: x,
+			y: y,
+			w: 24,
+			h: 24,
+			animation: &Animation{
+				image:           r.res.GetImage("effect-crawler-spray"),
+				numFrames:       6,
+				size:            24,
+				frameTimeAmount: 0.1,
+				isLoop:          false,
+			},
+			isTemporary: true,
+			ttl:         0.6,
+			isFlipX:     isFlip,
 		})
 	case effectBlobDeath:
 		r.AddEffectSprite(&EffectSprite{
