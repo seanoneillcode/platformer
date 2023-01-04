@@ -4,6 +4,7 @@ import (
 	"github.com/hajimehoshi/ebiten/v2"
 	"image/color"
 	"math"
+	"math/rand"
 	"platformer/common"
 )
 
@@ -69,12 +70,20 @@ func NewBlobEnemy(x float64, y float64, game *Game) *BlobEnemy {
 				frameTimeAmount: 0.5,
 				isLoop:          true,
 			},
+			"jump": {
+				image:           game.res.GetImage("blob-jump"),
+				numFrames:       1,
+				size:            32,
+				frameTimeAmount: 1,
+				isLoop:          true,
+			},
 		},
 		health:         2,
 		directionX:     1,
-		moveSpeed:      32,
+		moveSpeed:      80,
 		hurtAmountTime: 0.4,
 		thinkState:     thinkStateIdle,
+		tryJumpTimer:   rand.Float64() * 100,
 	}
 }
 
@@ -105,39 +114,38 @@ func (r *BlobEnemy) move(delta float64, game *Game) {
 	moveY := (r.velocityY * delta) + (0.5 * gravity * delta * delta)
 	r.velocityY = r.velocityY + (gravity * delta)
 
+	actualSpeed := r.moveSpeed
+	if r.touchingGround {
+		actualSpeed = 20
+	}
 	if math.Abs(r.x-r.targetX) < (r.moveSpeed * delta) {
 		r.x = r.targetX
 		r.currentAnimation = "idle"
 	}
 	if r.x < r.targetX {
-		moveX = r.moveSpeed * delta
+		moveX = actualSpeed * delta
 		r.currentAnimation = "run"
 	}
 	if r.x > r.targetX {
-		moveX = -(r.moveSpeed * delta)
+		moveX = -(actualSpeed * delta)
 		r.currentAnimation = "run"
 	}
 
 	// alter movement after checking or collision
 	cb := r.GetCollisionBox()
-	newX := cb.x + moveX
 	oldX := cb.x
-	//if moveX > 0 {
-	//	newX = cb.x + cb.w + moveX
-	//	oldX = cb.x + cb.w
-	//}
-
+	newX := cb.x + moveX
 	oldY := cb.y + cb.h
-	newY := cb.y - moveY + cb.h
+	newY := cb.y + cb.h - moveY
 
-	tx, ty := int((newX)/common.TileSize), int(oldX/common.TileSize)
+	// x movement collision
+	tx, ty := int((newX)/common.TileSize), int(oldY/common.TileSize)
 	game.debug.DrawBox(color.RGBA{R: 244, G: 12, B: 9, A: 244}, float64(tx*common.TileSize), float64(ty*common.TileSize), common.TileSize, common.TileSize)
 	td := game.Level.tiledGrid.GetTileData(tx, ty)
 	if td.Block || td.Damage || td.Platform {
 		newX = oldX
 	}
-
-	tx, ty = int((newX)/common.TileSize), int(newY/common.TileSize)
+	tx, ty = int((newX+cb.w)/common.TileSize), int(oldY/common.TileSize)
 	game.debug.DrawBox(color.RGBA{R: 244, G: 12, B: 9, A: 244}, float64(tx*common.TileSize), float64(ty*common.TileSize), common.TileSize, common.TileSize)
 	td = game.Level.tiledGrid.GetTileData(tx, ty)
 	if td.Block || td.Damage || td.Platform {
@@ -146,7 +154,6 @@ func (r *BlobEnemy) move(delta float64, game *Game) {
 
 	// y movement collision
 	r.touchingGround = false
-
 	tx, ty = int((oldX)/common.TileSize), int(newY/common.TileSize)
 	game.debug.DrawBox(color.RGBA{R: 244, G: 12, B: 9, A: 244}, float64(tx*common.TileSize), float64(ty*common.TileSize), common.TileSize, common.TileSize)
 	td = game.Level.tiledGrid.GetTileData(tx, ty)
@@ -155,19 +162,23 @@ func (r *BlobEnemy) move(delta float64, game *Game) {
 		r.velocityY = 0
 		r.touchingGround = true
 	}
-	//tx, ty = int((newX)/common.TileSize), int(newY/common.TileSize)
-	//game.debug.DrawBox(color.RGBA{R: 244, G: 12, B: 9, A: 244}, float64(tx*common.TileSize), float64(ty*common.TileSize), common.TileSize, common.TileSize)
-	//td = game.Level.tiledGrid.GetTileData(tx, ty)
-	//if td.Block || td.Damage || td.Platform {
-	//	newY = oldY
-	//	r.velocityY = 0
-	//	touchingGround = true
-	//}
+	tx, ty = int((oldX+cb.w)/common.TileSize), int(newY/common.TileSize)
+	game.debug.DrawBox(color.RGBA{R: 244, G: 12, B: 9, A: 244}, float64(tx*common.TileSize), float64(ty*common.TileSize), common.TileSize, common.TileSize)
+	td = game.Level.tiledGrid.GetTileData(tx, ty)
+	if td.Block || td.Damage || td.Platform {
+		newY = oldY
+		r.velocityY = 0
+		r.touchingGround = true
+	}
 
+	// jumping
 	r.tryJumpTimer = r.tryJumpTimer + delta
 	if r.touchingGround && r.tryJumpTimer > timeBetweenJumps {
 		r.tryJumpTimer = 0
 		r.velocityY = (2 * blobJumpHeight) / blobJumpTime
+	}
+	if r.velocityY > 0 {
+		r.currentAnimation = "jump"
 	}
 
 	r.x = newX - 8
@@ -226,7 +237,6 @@ func (r *BlobEnemy) GetHurt(game *Game) {
 	if r.health == 0 {
 		game.SpawnEffect(effectBlobDeath, r.x, r.y, r.directionX > 0, 0)
 		game.Level.RemoveEnemy(r)
-		// play effect
 	}
 }
 

@@ -144,7 +144,9 @@ func (r *Game) SpawnEffect(name string, x, y float64, isFlip bool, rot float64) 
 				frameTimeAmount: 0.1,
 				isLoop:          false,
 			},
-			isFlipX: isFlip,
+			isTemporary: true,
+			ttl:         0.6,
+			isFlipX:     isFlip,
 		})
 	case effectSpellHit:
 		r.AddEffectSprite(&EffectSprite{

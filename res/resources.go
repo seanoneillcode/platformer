@@ -34,6 +34,7 @@ func NewResources() *Resources {
 			"blob-idle":             common.LoadImage("blob-idle.png"),
 			"blob-hurt":             common.LoadImage("blob-hurt.png"),
 			"blob-die":              common.LoadImage("blob-die.png"),
+			"blob-jump":             common.LoadImage("blob-jump.png"),
 			"blob-attack":           common.LoadImage("blob-attack.png"),
 			"spell-bullet":          common.LoadImage("spell-bullet.png"),
 			"effect-spell-hit":      common.LoadImage("effect-spell-hit.png"),
