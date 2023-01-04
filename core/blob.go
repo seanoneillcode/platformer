@@ -107,7 +107,7 @@ const blobJumpTime = 0.5
 const timeBetweenJumps = 2.0
 const (
 	blobViewXDistance   = common.TileSize * 8
-	blobViewYDistance   = common.TileSize * 2
+	blobViewYDistance   = common.TileSize * 3
 	blobMoveSpeedGround = 20.0
 )
 
@@ -162,18 +162,24 @@ func (r *BlobEnemy) move(delta float64, game *Game) {
 	tx, ty = int((oldX)/common.TileSize), int(newY/common.TileSize)
 	game.debug.DrawBox(color.RGBA{R: 244, G: 12, B: 9, A: 244}, float64(tx*common.TileSize), float64(ty*common.TileSize), common.TileSize, common.TileSize)
 	td = game.Level.tiledGrid.GetTileData(tx, ty)
-	if td.Block || td.Damage || td.Platform {
+	if td.Block || td.Platform {
 		newY = oldY
 		r.velocityY = 0
 		r.touchingGround = true
 	}
+	if td.Damage {
+		r.GetHurt(game)
+	}
 	tx, ty = int((oldX+cb.w)/common.TileSize), int(newY/common.TileSize)
 	game.debug.DrawBox(color.RGBA{R: 244, G: 12, B: 9, A: 244}, float64(tx*common.TileSize), float64(ty*common.TileSize), common.TileSize, common.TileSize)
 	td = game.Level.tiledGrid.GetTileData(tx, ty)
-	if td.Block || td.Damage || td.Platform {
+	if td.Block || td.Platform {
 		newY = oldY
 		r.velocityY = 0
 		r.touchingGround = true
+	}
+	if td.Damage {
+		r.GetHurt(game)
 	}
 	tx, ty = int((oldX+8)/common.TileSize), int((newY-cb.h)/common.TileSize)
 	game.debug.DrawBox(color.RGBA{R: 244, G: 12, B: 9, A: 244}, float64(tx*common.TileSize), float64(ty*common.TileSize), common.TileSize, common.TileSize)
