@@ -26,7 +26,7 @@ func NewGame(resources *res.Resources, actions actions.Actions) *Game {
 		Enabled: true,
 		Actions: actions,
 	}
-	r.LoadLevel("level-delta")
+	r.LoadLevel("level-beta")
 	return r
 }
 

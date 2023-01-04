@@ -49,13 +49,19 @@
                  "type":"",
                  "visible":true,
                  "width":16,
-                 "x":48,
+                 "x":32,
                  "y":368
                 }, 
                 {
                  "height":32,
                  "id":3,
                  "name":"exit",
+                 "properties":[
+                        {
+                         "name":"next-level",
+                         "type":"string",
+                         "value":"level-delta"
+                        }],
                  "rotation":0,
                  "type":"",
                  "visible":true,

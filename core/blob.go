@@ -105,6 +105,11 @@ func (r *BlobEnemy) Update(delta float64, game *Game) {
 const blobJumpHeight = 2.0 * common.TileSize
 const blobJumpTime = 0.5
 const timeBetweenJumps = 2.0
+const (
+	blobViewXDistance   = common.TileSize * 8
+	blobViewYDistance   = common.TileSize * 2
+	blobMoveSpeedGround = 20.0
+)
 
 func (r *BlobEnemy) move(delta float64, game *Game) {
 	moveX := 0.0
@@ -116,7 +121,7 @@ func (r *BlobEnemy) move(delta float64, game *Game) {
 
 	actualSpeed := r.moveSpeed
 	if r.touchingGround {
-		actualSpeed = 20
+		actualSpeed = blobMoveSpeedGround
 	}
 	if math.Abs(r.x-r.targetX) < (r.moveSpeed * delta) {
 		r.x = r.targetX
@@ -170,10 +175,18 @@ func (r *BlobEnemy) move(delta float64, game *Game) {
 		r.velocityY = 0
 		r.touchingGround = true
 	}
+	tx, ty = int((oldX+8)/common.TileSize), int((newY-cb.h)/common.TileSize)
+	game.debug.DrawBox(color.RGBA{R: 244, G: 12, B: 9, A: 244}, float64(tx*common.TileSize), float64(ty*common.TileSize), common.TileSize, common.TileSize)
+	td = game.Level.tiledGrid.GetTileData(tx, ty)
+	if td.Block || td.Damage || td.Platform {
+		newY = oldY
+		r.velocityY = 0
+		r.touchingGround = true
+	}
 
 	// jumping
 	r.tryJumpTimer = r.tryJumpTimer + delta
-	if r.touchingGround && r.tryJumpTimer > timeBetweenJumps {
+	if r.touchingGround && r.tryJumpTimer > timeBetweenJumps && r.thinkState == thinkStateTarget {
 		r.tryJumpTimer = 0
 		r.velocityY = (2 * blobJumpHeight) / blobJumpTime
 	}
@@ -185,14 +198,10 @@ func (r *BlobEnemy) move(delta float64, game *Game) {
 	r.y = newY - 8 - cb.h
 }
 
-const (
-	blobViewDistance = common.TileSize * 6
-)
-
 func (r *BlobEnemy) think(game *Game) {
 	canSeePlayer := false
-	if r.x < game.Player.x+blobViewDistance && r.x > game.Player.x-blobViewDistance {
-		if r.y < game.Player.y+blobViewDistance && r.y > game.Player.y-blobViewDistance {
+	if r.x < game.Player.x+blobViewXDistance && r.x > game.Player.x-blobViewXDistance {
+		if r.y < game.Player.y+blobViewYDistance && r.y > game.Player.y-blobViewYDistance {
 			canSeePlayer = true
 			r.lastKnownPlayerX = game.Player.x
 		}
