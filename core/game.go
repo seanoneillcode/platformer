@@ -7,13 +7,14 @@ import (
 )
 
 type Game struct {
-	Enabled       bool
-	Player        *Player
-	Camera        *Camera
-	Level         *Level
-	debug         *DebugDrawer
-	spellObjects  []*SpellObject
-	effectSprites []*EffectSprite
+	Enabled        bool
+	Player         *Player
+	PlayerProgress *PlayerProgress
+	Camera         *Camera
+	Level          *Level
+	debug          *DebugDrawer
+	spellObjects   []*SpellObject
+	effectSprites  []*EffectSprite
 	// refs
 	res     *res.Resources
 	Actions actions.Actions
@@ -25,8 +26,11 @@ func NewGame(resources *res.Resources, actions actions.Actions) *Game {
 		res:     resources,
 		Enabled: true,
 		Actions: actions,
+		PlayerProgress: &PlayerProgress{
+			spells: map[string]bool{},
+		},
 	}
-	r.LoadLevel("level-delta")
+	r.LoadLevel("level-beta")
 	return r
 }
 

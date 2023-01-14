@@ -86,7 +86,7 @@ func NewPlayer(game *Game) *Player {
 		drawSizey:        32,
 		currentAnimation: "idle",
 		spells:           map[string]bool{},
-		currentSpell:     "spell-bullet", // spell-bullet
+		currentSpell:     "", //"spell-bullet"
 		animations: map[string]*Animation{
 			"run": {
 				image:           game.res.GetImage("player-run"),

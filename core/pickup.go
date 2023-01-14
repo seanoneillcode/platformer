@@ -50,4 +50,5 @@ type BookEffect struct {
 func (r *BookEffect) GetPickedUp(game *Game) {
 	fmt.Println("picked up the book called: ", r.title)
 	game.Player.AddSpell(r.spell)
+	game.PlayerProgress.AddSpell(r.spell)
 }
