@@ -85,8 +85,35 @@ type charInfo struct {
 	width int
 }
 
-func DrawText(screen *ebiten.Image, str string, x int, y int) {
-	drawText(screen, str, x, y)
+type Drawable interface {
+	DrawImage(img *ebiten.Image, options *ebiten.DrawImageOptions)
+}
+
+func DrawText(drawable Drawable, str string, x float64, y float64) {
+	drawText(drawable, str, x, y, 1)
+}
+
+func DrawTextWithAlpha(drawable Drawable, str string, x float64, y float64, alpha float64) {
+	drawText(drawable, str, x, y, alpha)
+}
+
+func TextWidth(text string) int {
+	x := 0
+	for _, c := range text {
+		if c == '\n' {
+			return x / 2
+		}
+		if c == ' ' {
+			x += spaceWidth
+			continue
+		}
+		ci, ok := characterInfo[c]
+		if !ok {
+			continue
+		}
+		x += ci.width + 1
+	}
+	return x / 2
 }
 
 const (
@@ -95,7 +122,7 @@ const (
 	spaceWidth = 4
 )
 
-func drawText(screen *ebiten.Image, str string, ox, oy int) {
+func drawText(drawable Drawable, str string, ox, oy float64, alpha float64) {
 	x := 0
 	y := 0
 	for _, c := range str {
@@ -124,7 +151,8 @@ func drawText(screen *ebiten.Image, str string, ox, oy int) {
 			op.GeoM.Translate(float64(ox*2), float64(oy*2))
 			op.GeoM.Translate(float64(x), float64(y))
 			op.GeoM.Scale(TextScale, TextScale)
-			screen.DrawImage(s, op)
+			op.ColorM.Scale(0, 0, 0, alpha)
+			drawable.DrawImage(s, op)
 			x += ci.width + 1
 		}
 	}

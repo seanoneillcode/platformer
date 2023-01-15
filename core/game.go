@@ -30,7 +30,7 @@ func NewGame(resources *res.Resources, actions actions.Actions) *Game {
 			spells: map[string]bool{},
 		},
 	}
-	r.LoadLevel("level-beta")
+	r.LoadLevel("level-alpha")
 	return r
 }
 

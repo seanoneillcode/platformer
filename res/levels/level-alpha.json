@@ -139,6 +139,74 @@
                  "width":16,
                  "x":960,
                  "y":432
+                }, 
+                {
+                 "height":16,
+                 "id":22,
+                 "name":"sign",
+                 "properties":[
+                        {
+                         "name":"text",
+                         "type":"string",
+                         "value":"press 'space' to jump"
+                        }],
+                 "rotation":0,
+                 "type":"",
+                 "visible":true,
+                 "width":16,
+                 "x":448,
+                 "y":304
+                }, 
+                {
+                 "height":16,
+                 "id":26,
+                 "name":"sign",
+                 "properties":[
+                        {
+                         "name":"text",
+                         "type":"string",
+                         "value":"hold 'jump' to go further"
+                        }],
+                 "rotation":0,
+                 "type":"",
+                 "visible":true,
+                 "width":16,
+                 "x":1056,
+                 "y":384
+                }, 
+                {
+                 "height":16,
+                 "id":27,
+                 "name":"sign",
+                 "properties":[
+                        {
+                         "name":"text",
+                         "type":"string",
+                         "value":"press 'up' to grab a ladder"
+                        }],
+                 "rotation":0,
+                 "type":"",
+                 "visible":true,
+                 "width":16,
+                 "x":1456,
+                 "y":272
+                }, 
+                {
+                 "height":16,
+                 "id":28,
+                 "name":"sign",
+                 "properties":[
+                        {
+                         "name":"text",
+                         "type":"string",
+                         "value":"press 'down' to drop through a platform"
+                        }],
+                 "rotation":0,
+                 "type":"",
+                 "visible":true,
+                 "width":16,
+                 "x":1856,
+                 "y":208
                 }],
          "opacity":1,
          "type":"objectgroup",
@@ -159,7 +227,7 @@
          "y":0
         }],
  "nextlayerid":6,
- "nextobjectid":22,
+ "nextobjectid":29,
  "orientation":"orthogonal",
  "renderorder":"right-down",
  "tiledversion":"1.7.2",

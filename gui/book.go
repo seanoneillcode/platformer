@@ -50,8 +50,8 @@ func (r *Book) Draw(screen *ebiten.Image) {
 	op.GeoM.Scale(common.Scale, common.Scale)
 	screen.DrawImage(r.pageImage, op)
 
-	paragraphX := int(r.x + 5)
-	paragraphY := int(r.y + 5)
+	paragraphX := r.x + 5
+	paragraphY := r.y + 5
 	common.DrawText(screen, r.text, paragraphX, paragraphY)
 }
 

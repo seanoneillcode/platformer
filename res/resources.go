@@ -46,6 +46,9 @@ func NewResources() *Resources {
 			"flimsy":                common.LoadImage("flimsy.png"),
 			"book-page":             common.LoadImage("book-page.png"),
 			"book-cover":            common.LoadImage("book-cover.png"),
+			"popup-sign":            common.LoadImage("pop-up-sign.png"),
+			"sign":                  common.LoadImage("sign.png"),
+			"stone-sign":            common.LoadImage("stone-sign.png"),
 		},
 	}
 }

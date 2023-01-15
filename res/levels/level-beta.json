@@ -354,6 +354,40 @@
                  "width":16,
                  "x":1536,
                  "y":416
+                }, 
+                {
+                 "height":16,
+                 "id":52,
+                 "name":"sign",
+                 "properties":[
+                        {
+                         "name":"text",
+                         "type":"string",
+                         "value":"press 'd' to use a spell"
+                        }],
+                 "rotation":0,
+                 "type":"",
+                 "visible":true,
+                 "width":16,
+                 "x":800,
+                 "y":240
+                }, 
+                {
+                 "height":16,
+                 "id":53,
+                 "name":"sign",
+                 "properties":[
+                        {
+                         "name":"text",
+                         "type":"string",
+                         "value":"jump and press down to aim downwards"
+                        }],
+                 "rotation":0,
+                 "type":"",
+                 "visible":true,
+                 "width":16,
+                 "x":1264,
+                 "y":224
                 }],
          "opacity":1,
          "type":"objectgroup",
@@ -362,7 +396,7 @@
          "y":0
         }],
  "nextlayerid":6,
- "nextobjectid":52,
+ "nextobjectid":54,
  "orientation":"orthogonal",
  "renderorder":"right-down",
  "tiledversion":"1.7.2",

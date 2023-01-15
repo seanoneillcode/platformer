@@ -13,6 +13,7 @@ const (
 	crawlerEnemy = "crawler"
 	blobEnemy    = "blob"
 	flimsyObject = "flimsy"
+	signObject   = "sign"
 )
 
 type Level struct {
@@ -25,6 +26,7 @@ type Level struct {
 	pickups          []*Pickup
 	enemies          []Enemy
 	flimsy           []*Flimsy
+	signs            []*Sign
 }
 
 func NewLevel(name string, game *Game) *Level {
@@ -110,6 +112,16 @@ func NewLevel(name string, game *Game) *Level {
 			newPickup.effect = effect
 			l.pickups = append(l.pickups, newPickup)
 		}
+		if object.Name == signObject {
+			x, y := float64(object.X), float64(object.Y)
+			text := "no text found"
+			for _, prop := range object.Properties {
+				if prop.Name == "text" && prop.Value != nil {
+					text = (prop.Value).(string)
+				}
+			}
+			l.signs = append(l.signs, NewSign(x, y, text, game))
+		}
 	}
 	// validate Level
 	if l.spawn == nil {
@@ -128,9 +140,11 @@ func (r *Level) Update(delta float64, game *Game) {
 	for _, pickup := range r.pickups {
 		pickup.Update(delta, game)
 	}
-
 	for _, enemy := range r.enemies {
 		enemy.Update(delta, game)
+	}
+	for _, sign := range r.signs {
+		sign.Update(delta, game)
 	}
 }
 
@@ -152,6 +166,9 @@ func (r *Level) Draw(camera common.Camera) {
 	}
 	for _, f := range r.flimsy {
 		f.Draw(camera)
+	}
+	for _, sign := range r.signs {
+		sign.Draw(camera)
 	}
 }
 
